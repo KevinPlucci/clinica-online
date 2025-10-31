@@ -12,15 +12,13 @@
     <h1 id="bienvenida-title" class="hero__title">Bienvenido/a a Clínica Online</h1>
     <p class="hero__subtitle">Accedé a tu cuenta o creá un perfil para comenzar.</p>
 
-    <!-- Si está logueado, mostramos CTA al panel; si no, Login/Registro -->
-    <ng-container *ngIf="(loggedIn$ | async) === true; else anon">
-      <a
-        class="btn btn-primary"
-        [routerLink]="(isAdmin$ | async) ? '/admin/usuarios' : '/bienvenida'"
-        aria-label="Ir al panel"
-      >
-        Ir al panel
-      </a>
+    <ng-container *ngIf="me$ | async as me; else anon">
+      <div class="cta">
+        <a class="btn btn-primary" [routerLink]="getPanelLink(me?.rol)" aria-label="Ir al panel">
+          Ir al panel
+        </a>
+        <button type="button" class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>
+      </div>
     </ng-container>
 
     <ng-template #anon>

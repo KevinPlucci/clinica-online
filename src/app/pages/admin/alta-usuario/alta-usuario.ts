@@ -1,3 +1,5 @@
+// src/app/pages/admin/alta-usuario/alta-usuario.ts
+
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -10,17 +12,16 @@ import {
   AbstractControl,
   ValidatorFn,
 } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminUserService, RolAlta } from '../../../services/admin-user.service';
 
 const NAME_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
 const DNI_PATTERN = /^\d{7,9}$/;
 
-// ✅ Validador compatible con Angular: recibe AbstractControl y castea a FormArray
 function atLeastOneValidator(): ValidatorFn {
   return (control: AbstractControl): ValidationErrors | null => {
     const arr = control as FormArray;
-    // usamos value.length si es array; fallback a arr.length si existiera
     const len = Array.isArray(arr?.value) ? arr.value.length : (arr as any)?.length ?? 0;
     return len > 0 ? null : { atLeastOne: true };
   };
@@ -29,7 +30,7 @@ function atLeastOneValidator(): ValidatorFn {
 @Component({
   selector: 'app-alta-usuario',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './alta-usuario.html',
   styleUrls: ['./alta-usuario.scss'],
 })
@@ -42,24 +43,16 @@ export class AltaUsuarioComponent {
 
   form: FormGroup = this.fb.group({
     rol: ['paciente', [Validators.required]],
-
     nombre: ['', [Validators.required, Validators.pattern(NAME_PATTERN)]],
     apellido: ['', [Validators.required, Validators.pattern(NAME_PATTERN)]],
     edad: [null, [Validators.required, Validators.min(0), Validators.max(120)]],
     dni: ['', [Validators.required, Validators.pattern(DNI_PATTERN)]],
-
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
-
-    // paciente
     obraSocial: [''],
-
-    // especialista
-    // ❗️Usamos validador como ValidatorFn, no como función tipada a FormArray
     especialidades: this.fb.array([], { validators: [atLeastOneValidator()] }),
   });
 
-  // archivos
   pacienteImg1: File | null = null;
   pacienteImg2: File | null = null;
   especialistaImg: File | null = null;
@@ -77,7 +70,6 @@ export class AltaUsuarioComponent {
   addEspecialidad(val: string) {
     const clean = (val || '').trim();
     if (!clean) return;
-    // evitamos duplicados con el array de valores
     const actuales: string[] = (this.especialidadesFA.value ?? []) as string[];
     if (!actuales.includes(clean)) {
       this.especialidadesFA.push(this.fb.control(clean));
@@ -111,7 +103,6 @@ export class AltaUsuarioComponent {
       this.form.markAllAsTouched();
       return;
     }
-
     const v = this.form.value;
     const payload = {
       rol: this.rol,
@@ -128,7 +119,6 @@ export class AltaUsuarioComponent {
       especialistaImg: this.especialistaImg,
       adminImg: this.adminImg,
     } as any;
-
     if (this.rol === 'paciente' && (!this.pacienteImg1 || !this.pacienteImg2)) {
       alert('El paciente requiere 2 imágenes de perfil.');
       return;
@@ -145,7 +135,6 @@ export class AltaUsuarioComponent {
       alert('Debés agregar al menos una especialidad.');
       return;
     }
-
     try {
       await this.adminUser.crearUsuarioComoAdmin(payload);
       alert('Usuario creado. Se envió un email de verificación.');
@@ -157,6 +146,13 @@ export class AltaUsuarioComponent {
   }
 
   cancelar() {
+    this.router.navigate(['/admin/usuarios']);
+  }
+
+  /**
+   * FIX: Agregamos esta función para el botón de "Volver"
+   */
+  volver() {
     this.router.navigate(['/admin/usuarios']);
   }
 }

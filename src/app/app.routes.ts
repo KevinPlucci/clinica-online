@@ -24,7 +24,25 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
       { path: 'usuarios', component: SeccionUsuariosComponent },
-      { path: 'usuarios/nuevo', component: AltaUsuarioComponent }, // <- alta protegida
+      { path: 'usuarios/nuevo', component: AltaUsuarioComponent },
+    ],
+  },
+
+  /**
+   * FIX: Agregamos las rutas futuras para los otros roles.
+   * Por ahora, las redirigimos a 'bienvenida' para que no se rompa la app,
+   * pero ya tenés la estructura lista para cuando crees esos componentes.
+   */
+  {
+    path: 'paciente',
+    children: [
+      { path: 'turnos', component: BienvenidaComponent }, // Reemplazar con PacienteComponent
+    ],
+  },
+  {
+    path: 'especialista',
+    children: [
+      { path: 'agenda', component: BienvenidaComponent }, // Reemplazar con EspecialistaComponent
     ],
   },
 ];

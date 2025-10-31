@@ -1,3 +1,5 @@
+// src/app/pages/admin/seccion-usuarios/seccion-usuarios.ts
+
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -142,6 +144,13 @@ export class SeccionUsuariosComponent implements OnInit {
 
   crearNuevoUsuario() {
     this.router.navigate(['/admin/usuarios/nuevo']);
+  }
+
+  /**
+   * FIX: Agregamos esta función para volver
+   */
+  volverABienvenida() {
+    this.router.navigate(['/bienvenida']);
   }
 
   toggleSort(key: SortKey) {

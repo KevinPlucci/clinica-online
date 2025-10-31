@@ -33,12 +33,13 @@
     </div>
 
     <div class="actions">
+      <button class="btn-outline" (click)="volverABienvenida()">← Volver a Bienvenida</button>
+
       <button class="btn-outline" (click)="exportCsv()">Exportar CSV</button>
       <button class="btn" (click)="crearNuevoUsuario()">+ Nuevo usuario</button>
     </div>
   </div>
 
-  <!-- Acciones en lote -->
   <div class="bulk" *ngIf="selectedCount() > 0">
     <div>
       {{ selectedCount() }} seleccionado(s) — Especialistas: {{ selectedSpecialistsCount() }}

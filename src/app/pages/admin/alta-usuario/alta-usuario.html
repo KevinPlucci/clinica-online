@@ -1,97 +1,112 @@
 <div class="container">
+  <button type="button" class="btn-back" (click)="volver()">← Volver a Usuarios</button>
+
   <h2>Nuevo usuario</h2>
 
-  <div class="role">
-    <label for="rol">Rol</label>
-    <!-- Usamos Reactive Forms en vez de ngModel -->
-    <select id="rol" formControlName="rol" (change)="onRolChange($any($event.target).value)">
-      <option value="paciente">Paciente</option>
-      <option value="especialista">Especialista</option>
-      <option value="admin">Administrador</option>
-    </select>
-  </div>
-
   <form [formGroup]="form" (ngSubmit)="guardar()" novalidate>
+    <div class="role">
+      <label for="rol">Rol</label>
+      <select id="rol" formControlName="rol" (change)="onRolChange($any($event.target).value)">
+        <option value="paciente">Paciente</option>
+        <option value="especialista">Especialista</option>
+        <option value="admin">Administrador</option>
+      </select>
+    </div>
+
     <div class="grid">
-      <div>
-        <label>Nombre</label>
-        <input type="text" formControlName="nombre" />
-      </div>
-      <div>
-        <label>Apellido</label>
-        <input type="text" formControlName="apellido" />
-      </div>
-      <div>
-        <label>Edad</label>
-        <input type="number" formControlName="edad" />
-      </div>
-      <div>
-        <label>DNI</label>
-        <input type="text" formControlName="dni" />
-      </div>
-      <div>
-        <label>Email</label>
-        <input type="email" formControlName="email" />
-      </div>
-      <div>
-        <label>Password</label>
-        <input type="password" formControlName="password" />
+      <div class="grid-row">
+        <div>
+          <label>Nombre</label>
+          <input type="text" formControlName="nombre" />
+        </div>
+        <div>
+          <label>Apellido</label>
+          <input type="text" formControlName="apellido" />
+        </div>
       </div>
 
-      <!-- Paciente -->
+      <div class="grid-row">
+        <div>
+          <label>Edad</label>
+          <input type="number" formControlName="edad" />
+        </div>
+        <div>
+          <label>DNI</label>
+          <input type="text" formControlName="dni" />
+        </div>
+      </div>
+
+      <div class="grid-row">
+        <div>
+          <label>Email</label>
+          <input type="email" formControlName="email" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input type="password" formControlName="password" />
+        </div>
+      </div>
+
       <ng-container *ngIf="rol === 'paciente'">
-        <div class="full">
-          <label>Obra Social</label>
-          <input type="text" formControlName="obraSocial" />
+        <div class="grid-row">
+          <div class="full">
+            <label>Obra Social</label>
+            <input type="text" formControlName="obraSocial" />
+          </div>
         </div>
-        <div>
-          <label>Imagen 1 (obligatoria)</label>
-          <input type="file" accept="image/*" (change)="onFileChange('pac1', $event)" />
-        </div>
-        <div>
-          <label>Imagen 2 (obligatoria)</label>
-          <input type="file" accept="image/*" (change)="onFileChange('pac2', $event)" />
+        <div class="grid-row">
+          <div>
+            <label>Imagen 1 (obligatoria)</label>
+            <input type="file" accept="image/*" (change)="onFileChange('pac1', $event)" />
+          </div>
+          <div>
+            <label>Imagen 2 (obligatoria)</label>
+            <input type="file" accept="image/*" (change)="onFileChange('pac2', $event)" />
+          </div>
         </div>
       </ng-container>
 
-      <!-- Especialista -->
       <ng-container *ngIf="rol === 'especialista'">
-        <div class="full">
-          <label>Agregar especialidad</label>
-          <div class="row">
-            <input type="text" #esp />
-            <button
-              type="button"
-              class="btn-small"
-              (click)="addEspecialidad(esp.value); esp.value = ''"
-            >
-              Agregar
-            </button>
-          </div>
-          <div class="chips">
-            <span class="chip" *ngFor="let c of especialidadesFA.controls; let i = index">
-              {{ c.value }}
-              <button type="button" class="chip-x" (click)="removeEspecialidad(i)">×</button>
-            </span>
+        <div class="grid-row">
+          <div class="full">
+            <label>Agregar especialidad</label>
+            <div class="row">
+              <input type="text" #esp />
+              <button
+                type="button"
+                class="btn-small"
+                (click)="addEspecialidad(esp.value); esp.value = ''"
+              >
+                Agregar
+              </button>
+            </div>
+            <div class="chips">
+              <span class="chip" *ngFor="let c of especialidadesFA.controls; let i = index">
+                {{ c.value }}
+                <button type="button" class="chip-x" (click)="removeEspecialidad(i)">×</button>
+              </span>
+            </div>
           </div>
         </div>
-        <div class="full">
-          <label>Imagen de perfil (obligatoria)</label>
-          <input type="file" accept="image/*" (change)="onFileChange('esp', $event)" />
+        <div class="grid-row">
+          <div class="full">
+            <label>Imagen de perfil (obligatoria)</label>
+            <input type="file" accept="image/*" (change)="onFileChange('esp', $event)" />
+          </div>
         </div>
       </ng-container>
 
-      <!-- Admin -->
       <ng-container *ngIf="rol === 'admin'">
-        <div class="full">
-          <label>Imagen de perfil (obligatoria)</label>
-          <input type="file" accept="image/*" (change)="onFileChange('adm', $event)" />
+        <div class="grid-row">
+          <div class="full">
+            <label>Imagen de perfil (obligatoria)</label>
+            <input type="file" accept="image/*" (change)="onFileChange('adm', $event)" />
+          </div>
         </div>
       </ng-container>
     </div>
 
-    <div class="actions">
-      <button type="button" class="btn-outline" (click)="cancelar()">Cancelar</button>
+    <div classs="actions">
       <button type="submit" class="btn">Guardar</button>
     </div>
   </form>
