@@ -1,0 +1,37 @@
+<main class="welcome" id="main-content">
+  <section class="hero container" aria-labelledby="bienvenida-title">
+    <img
+      class="hero__logo"
+      src="assets/logo-clinica.png"
+      alt="Logo Clínica Online"
+      width="160"
+      height="160"
+      decoding="async"
+    />
+
+    <h1 id="bienvenida-title" class="hero__title">Bienvenido/a a Clínica Online</h1>
+    <p class="hero__subtitle">Accedé a tu cuenta o creá un perfil para comenzar.</p>
+
+    <!-- Si está logueado, mostramos CTA al panel; si no, Login/Registro -->
+    <ng-container *ngIf="(loggedIn$ | async) === true; else anon">
+      <a
+        class="btn btn-primary"
+        [routerLink]="(isAdmin$ | async) ? '/admin/usuarios' : '/bienvenida'"
+        aria-label="Ir al panel"
+      >
+        Ir al panel
+      </a>
+    </ng-container>
+
+    <ng-template #anon>
+      <div class="cta">
+        <a class="btn btn-primary" routerLink="/login" aria-label="Ingresar al sistema">
+          Ingresar
+        </a>
+        <a class="btn btn-secondary" routerLink="/registro" aria-label="Registrarse en el sistema">
+          Registrarse
+        </a>
+      </div>
+    </ng-template>
+  </section>
+</main>

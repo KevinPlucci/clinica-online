@@ -1,0 +1,14 @@
+<div class="toasts">
+  <div
+    class="toast"
+    *ngFor="let t of toasts()"
+    [class.toast--success]="t.kind === 'success'"
+    [class.toast--error]="t.kind === 'error'"
+    [class.toast--info]="t.kind === 'info'"
+    [class.toast--warning]="t.kind === 'warning'"
+  >
+    <span class="icon">{{ icon(t.kind) }}</span>
+    <span class="msg">{{ t.message }}</span>
+    <button class="x" (click)="dismiss(t.id)" aria-label="Cerrar">×</button>
+  </div>
+</div>

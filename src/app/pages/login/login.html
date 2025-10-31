@@ -1,0 +1,84 @@
+<div class="login-container">
+  <div class="login-box" aria-labelledby="login-title">
+    <h2 id="login-title">Ingresar al sistema</h2>
+
+    <!-- Mensajes accesibles -->
+    <div class="msg msg--error" *ngIf="errorMessage" aria-live="polite">{{ errorMessage }}</div>
+    <div class="msg msg--info" *ngIf="infoMessage" aria-live="polite">{{ infoMessage }}</div>
+
+    <!-- Acceso rápido -->
+    <div class="quick-access" aria-label="Accesos rápidos">
+      <button type="button" class="qa" (click)="accesoRapido('paciente')">Paciente demo</button>
+      <button type="button" class="qa" (click)="accesoRapido('especialista')">
+        Especialista demo
+      </button>
+      <button type="button" class="qa" (click)="accesoRapido('admin')">Admin demo</button>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
+      <div class="row">
+        <label for="l_email">Correo electrónico</label>
+        <input id="l_email" type="email" formControlName="email" autocomplete="username" />
+        <div class="err" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          Email inválido.
+        </div>
+      </div>
+
+      <div class="row">
+        <label for="l_pass">Contraseña</label>
+        <div class="password-field">
+          <input
+            id="l_pass"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="toggle-pass"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-pressed]="showPassword"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            title="Mostrar/Ocultar"
+          >
+            👁
+          </button>
+        </div>
+        <div
+          class="err"
+          *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+        >
+          Mínimo 6 caracteres.
+        </div>
+      </div>
+
+      <div class="row row--inline">
+        <label class="remember">
+          <input type="checkbox" formControlName="remember" />
+          Recordarme en este dispositivo
+        </label>
+        <button type="button" class="link" (click)="resetPassword()">
+          ¿Olvidaste tu contraseña?
+        </button>
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="loginForm.invalid || isSubmitting">
+        {{ isSubmitting ? 'Ingresando...' : 'Ingresar' }}
+      </button>
+    </form>
+
+    <!-- Reenviar verificación -->
+    <div class="resend" *ngIf="showResend">
+      <button
+        type="button"
+        class="btn-resend"
+        (click)="reenviarVerificacion()"
+        [disabled]="cooldown > 0"
+      >
+        Reenviar verificación <span *ngIf="cooldown > 0">({{ cooldown }}s)</span>
+      </button>
+    </div>
+
+    <div class="register-link">¿No tenés cuenta? <a (click)="irARegistro()">Registrate</a></div>
+  </div>
+</div>

@@ -1,0 +1,56 @@
+.container { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+.toolbar {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;
+}
+.filters { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.filters input[type="search"], .filters select {
+  border: 1px solid #cbd5e1; border-radius: 10px; padding: .5rem .75rem;
+}
+
+.actions { display: flex; gap: .5rem; align-items: center; }
+
+.bulk {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 10px;
+  padding: .5rem .75rem; margin-bottom: .75rem;
+}
+.bulk__buttons { display: flex; gap: .5rem; align-items: center; }
+
+.btn { padding: .6rem 1rem; border-radius: 10px; background: #1d4ed8; color: #fff; border: 0; cursor: pointer; }
+.btn-outline { padding: .45rem .8rem; border-radius: 10px; border: 1px solid #1d4ed8; background: transparent; color: #1d4ed8; cursor: pointer; }
+.btn-small { padding: .35rem .6rem; border-radius: 8px; background: #1d4ed8; color: #fff; border: 0; cursor: pointer; }
+
+.table { width: 100%; border-radius: 12px; overflow: hidden; background: var(--surface, #fff); box-shadow: 0 6px 18px rgba(0,0,0,.1); }
+.thead, .row {
+  display: grid;
+  grid-template-columns: 44px 64px 1.2fr .9fr 1.4fr .8fr .9fr .9fr .9fr; /* + checkbox + verificación */
+  align-items: center;
+}
+.thead { font-weight: 600; background: #f1f5f9; padding: .6rem .75rem; }
+.row { padding: .6rem .75rem; border-top: 1px solid #e2e8f0; }
+.cell.avatar img { border-radius: 50%; object-fit: cover; }
+.th-btn { background: transparent; border: 0; text-align: left; font-weight: 600; cursor: pointer; }
+.sort { margin-left: .25rem; color: #475569; }
+.th-check { display: flex; justify-content: center; }
+.cell.check { display: flex; justify-content: center; }
+
+.badge {
+  display: inline-block; padding: .15rem .5rem; border-radius: 999px; font-size: .8rem;
+  background: #e2e8f0; color: #0b1220;
+}
+.badge--ok { background: #dcfce7; color: #14532d; }
+.badge--warn { background: #fee2e2; color: #7f1d1d; }
+
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-top: 1rem; }
+.page-size { display: inline-flex; align-items: center; gap: .35rem; }
+
+@media (max-width: 1024px) {
+  .thead, .row {
+    grid-template-columns: 40px 56px 1fr .8fr 1.2fr .7fr .8fr .8fr .8fr;
+  }
+}
+@media (max-width: 720px) {
+  .filters { width: 100%; }
+  .filters input[type="search"] { flex: 1; min-width: 200px; }
+}

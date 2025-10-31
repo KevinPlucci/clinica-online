@@ -1,0 +1,180 @@
+<app-toasts></app-toasts>
+
+<div class="container">
+  <h2>Usuarios</h2>
+
+  <div class="toolbar">
+    <div class="filters">
+      <input
+        type="search"
+        placeholder="Buscar por nombre, email o DNI…"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+
+      <select [ngModel]="rol()" (ngModelChange)="rol.set($event)">
+        <option value="all">Todos los roles</option>
+        <option value="admin">Administrador</option>
+        <option value="paciente">Paciente</option>
+        <option value="especialista">Especialista</option>
+      </select>
+
+      <select [ngModel]="estado()" (ngModelChange)="estado.set($event)">
+        <option value="all">Todos los estados</option>
+        <option value="habilitado">Habilitados</option>
+        <option value="inhabilitado">Inhabilitados</option>
+      </select>
+
+      <select [ngModel]="verif()" (ngModelChange)="verif.set($event)">
+        <option value="all">Todos</option>
+        <option value="verificado">Verificados</option>
+        <option value="noverificado">Sin verificar</option>
+      </select>
+    </div>
+
+    <div class="actions">
+      <button class="btn-outline" (click)="exportCsv()">Exportar CSV</button>
+      <button class="btn" (click)="crearNuevoUsuario()">+ Nuevo usuario</button>
+    </div>
+  </div>
+
+  <!-- Acciones en lote -->
+  <div class="bulk" *ngIf="selectedCount() > 0">
+    <div>
+      {{ selectedCount() }} seleccionado(s) — Especialistas: {{ selectedSpecialistsCount() }}
+    </div>
+    <div class="bulk__buttons">
+      <button
+        class="btn-small"
+        (click)="bulkHabilitar(true)"
+        [disabled]="selectedSpecialistsCount() === 0"
+      >
+        Habilitar
+      </button>
+      <button
+        class="btn-small"
+        (click)="bulkHabilitar(false)"
+        [disabled]="selectedSpecialistsCount() === 0"
+      >
+        Inhabilitar
+      </button>
+      <button class="btn-outline" (click)="clearSelection()">Quitar selección</button>
+    </div>
+  </div>
+
+  <div class="table" role="table" aria-label="Listado de usuarios">
+    <div class="thead" role="row">
+      <div class="th-check">
+        <input
+          type="checkbox"
+          [checked]="allSelectedOnPage()"
+          (change)="toggleSelectAllPage()"
+          aria-label="Seleccionar todos en la página"
+        />
+      </div>
+
+      <div role="columnheader">Avatar</div>
+      <button role="columnheader" class="th-btn" (click)="toggleSort('nombre')">
+        Nombre
+        <span class="sort" *ngIf="sortKey() === 'nombre'">{{
+          sortDir() === 'asc' ? '▲' : '▼'
+        }}</span>
+      </button>
+      <button role="columnheader" class="th-btn" (click)="toggleSort('rol')">
+        Rol
+        <span class="sort" *ngIf="sortKey() === 'rol'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+      </button>
+      <button role="columnheader" class="th-btn" (click)="toggleSort('email')">
+        Email
+        <span class="sort" *ngIf="sortKey() === 'email'">{{
+          sortDir() === 'asc' ? '▲' : '▼'
+        }}</span>
+      </button>
+      <button role="columnheader" class="th-btn" (click)="toggleSort('dni')">
+        DNI
+        <span class="sort" *ngIf="sortKey() === 'dni'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+      </button>
+      <button role="columnheader" class="th-btn" (click)="toggleSort('estado')">
+        Estado
+        <span class="sort" *ngIf="sortKey() === 'estado'">{{
+          sortDir() === 'asc' ? '▲' : '▼'
+        }}</span>
+      </button>
+      <button role="columnheader" class="th-btn" (click)="toggleSort('verif')">
+        Verificación
+        <span class="sort" *ngIf="sortKey() === 'verif'">{{
+          sortDir() === 'asc' ? '▲' : '▼'
+        }}</span>
+      </button>
+      <div role="columnheader">Acciones</div>
+    </div>
+
+    <div class="row" role="row" *ngFor="let u of paged()">
+      <div class="cell check">
+        <input
+          type="checkbox"
+          [checked]="selected().has(u.uid)"
+          (change)="toggleSelect(u.uid)"
+          [attr.aria-label]="'Seleccionar ' + (u.email || u.uid)"
+        />
+      </div>
+
+      <div class="cell avatar">
+        <img
+          [src]="u.fotoURL || u.fotoURL1 || u.fotoURL2 || 'assets/avatar-placeholder.png'"
+          alt="Avatar de {{ u.displayName || u.email }}"
+          width="40"
+          height="40"
+        />
+      </div>
+      <div class="cell">{{ u.nombre }} {{ u.apellido }}</div>
+      <div class="cell">{{ u.rol }}</div>
+      <div class="cell">{{ u.email }}</div>
+      <div class="cell">{{ u.dni || '-' }}</div>
+      <div class="cell">
+        <span *ngIf="u.rol !== 'especialista'">—</span>
+        <span *ngIf="u.rol === 'especialista'">{{
+          u.habilitado ? 'Habilitado' : 'Inhabilitado'
+        }}</span>
+      </div>
+      <div class="cell">
+        <span
+          class="badge"
+          [class.badge--ok]="u.emailVerified === true"
+          [class.badge--warn]="!u.emailVerified"
+        >
+          {{ u.emailVerified ? 'Verificado' : 'Sin verificar' }}
+        </span>
+      </div>
+      <div class="cell actions">
+        <button
+          *ngIf="u.rol === 'especialista'"
+          class="btn-small"
+          (click)="cambiarEstadoHabilitado(u)"
+          [attr.aria-label]="u.habilitado ? 'Inhabilitar especialista' : 'Habilitar especialista'"
+        >
+          {{ u.habilitado ? 'Inhabilitar' : 'Habilitar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="pagination">
+    <div class="count">Mostrando {{ paged().length }} de {{ total() }}</div>
+    <div class="controls">
+      <button class="btn-outline" (click)="prevPage()">Anterior</button>
+      <span>Página {{ page() }}</span>
+      <button class="btn-outline" (click)="nextPage()">Siguiente</button>
+
+      <label class="page-size">
+        Por página
+        <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); page.set(1)">
+          <option [ngValue]="5">5</option>
+          <option [ngValue]="10">10</option>
+          <option [ngValue]="20">20</option>
+          <option [ngValue]="50">50</option>
+        </select>
+      </label>
+    </div>
+  </div>
+</div>

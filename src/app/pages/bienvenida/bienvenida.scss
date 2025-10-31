@@ -1,0 +1,76 @@
+.welcome {
+  display: block;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.hero {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.hero__logo {
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
+.hero__title {
+  font-size: clamp(1.5rem, 1.1rem + 2vw, 2.25rem);
+  margin: 0.25rem 0 0.5rem;
+}
+
+.hero__subtitle {
+  color: #334155; /* slate-700 */
+  margin-bottom: 1.25rem;
+}
+
+.cta {
+  display: inline-flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Botones base: se apoyan en los tokens globales si existen */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  min-width: 9rem;
+  padding: .6rem 1rem;
+  border-radius: 12px;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  color: #fff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn:focus-visible {
+  outline: 2px solid rgba(37, 99, 235, .6); /* ring brand */
+  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, .25);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background-color: #1d4ed8; /* brand-700 */
+}
+
+.btn-secondary {
+  background-color: #475569; /* slate-600 */
+}
+
+/* Responsive spacing */
+@media (max-width: 600px) {
+  .hero { padding: 2rem 1rem; }
+  .btn { min-width: auto; width: 100%; }
+}
