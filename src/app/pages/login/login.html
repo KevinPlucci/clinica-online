@@ -1,19 +1,17 @@
 <div class="login-container">
   <div class="login-box" aria-labelledby="login-title">
+    <button type="button" class="btn-back" (click)="volverABienvenida()">
+      ← Volver a Bienvenida
+    </button>
+
     <h2 id="login-title">Ingresar al sistema</h2>
 
-    <!-- Mensajes accesibles -->
     <div class="msg msg--error" *ngIf="errorMessage" aria-live="polite">{{ errorMessage }}</div>
     <div class="msg msg--info" *ngIf="infoMessage" aria-live="polite">{{ infoMessage }}</div>
 
-    <!-- Acceso rápido -->
-    <div class="quick-access" aria-label="Accesos rápidos">
-      <button type="button" class="qa" (click)="accesoRapido('paciente')">Paciente demo</button>
-      <button type="button" class="qa" (click)="accesoRapido('especialista')">
-        Especialista demo
-      </button>
-      <button type="button" class="qa" (click)="accesoRapido('admin')">Admin demo</button>
-    </div>
+    <!-- --- ELIMINADO (FAB) ---
+      Se quita el contenedor de accesos rápidos original.
+    -->
 
     <form [formGroup]="loginForm" (ngSubmit)="login()" novalidate>
       <div class="row">
@@ -67,7 +65,6 @@
       </button>
     </form>
 
-    <!-- Reenviar verificación -->
     <div class="resend" *ngIf="showResend">
       <button
         type="button"
@@ -81,4 +78,51 @@
 
     <div class="register-link">¿No tenés cuenta? <a (click)="irARegistro()">Registrate</a></div>
   </div>
+
+  <!-- +++ INICIO CAMBIOS (FAB) +++ -->
+  <!--
+    Contenedor del Botón de Acción Flotante (FAB) para accesos rápidos.
+    Se posiciona en la esquina inferior izquierda (ver .scss).
+  -->
+  <div class="fab-container">
+    <!-- Opciones del FAB -->
+    <div class="fab-options" [attr.data-open]="isFabOpen">
+      <!--
+        Iteramos sobre los 6 usuarios definidos en el .ts
+        y creamos una opción animada para cada uno.
+      -->
+      <button
+        type="button"
+        class="fab-option"
+        *ngFor="let user of quickAccessUsers; let i = index"
+        (click)="accesoRapido(user)"
+        [style.transition-delay]="isFabOpen ? i * 0.04 + 's' : (6 - i) * 0.03 + 's'"
+      >
+        <img
+          [src]="user.img"
+          [alt]="user.nombre"
+          onerror="this.src='https://placehold.co/60x60/cccccc/FFFFFF?text=Err'"
+        />
+        <span>{{ user.nombre }} ({{ user.rol }})</span>
+      </button>
+    </div>
+
+    <!-- Botón principal del FAB -->
+    <button
+      type="button"
+      class="fab-button"
+      (click)="toggleFab()"
+      title="Accesos Rápidos"
+      [attr.aria-expanded]="isFabOpen"
+      aria-label="Mostrar accesos rápidos"
+    >
+      <!-- Usamos la imagen del admin (primer usuario) como ícono principal -->
+      <img
+        [src]="quickAccessUsers[0].img"
+        alt="Acceso Rápido"
+        onerror="this.src='https://placehold.co/60x60/cccccc/FFFFFF?text=A'"
+      />
+    </button>
+  </div>
+  <!-- +++ FIN CAMBIOS (FAB) +++ -->
 </div>

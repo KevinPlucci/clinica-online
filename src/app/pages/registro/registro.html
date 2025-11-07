@@ -1,400 +1,400 @@
 <div class="register-container">
   <div class="register-box" aria-labelledby="registro-title">
+    <button type="button" class="btn-back" (click)="irALogin()">← Volver al Login</button>
+
     <h2 id="registro-title">Crear una cuenta</h2>
 
-    <div class="role-selector" role="tablist" aria-label="Seleccionar rol">
-      <button
-        role="tab"
-        [attr.aria-selected]="rolSeleccionado === 'paciente'"
-        [class.active]="rolSeleccionado === 'paciente'"
-        (click)="rolSeleccionado = 'paciente'"
-      >
-        Soy Paciente
+    <!-- +++ INICIO CAMBIOS (Selección de Rol) +++ -->
+    <!--
+      Pantalla de selección de rol.
+      Se muestra solo si 'rolSeleccionado' es null (al inicio).
+    -->
+    <div *ngIf="!rolSeleccionado" class="role-selection-screen">
+      <h3 class="role-selection-title">¿Cómo querés registrarte?</h3>
+
+      <!-- Botón Paciente -->
+      <button type="button" class="role-select-button" (click)="seleccionarRol('paciente')">
+        <img
+          src="https://placehold.co/100x100/e0e7ff/3730a3?text=Paciente"
+          alt="Icono de paciente"
+          class="role-select-img"
+        />
+        <div class="role-select-text">
+          <span class="role-select-title">Soy Paciente</span>
+          <span class="role-select-desc"> Buscá especialistas y gestioná tus turnos. </span>
+        </div>
       </button>
-      <button
-        role="tab"
-        [attr.aria-selected]="rolSeleccionado === 'especialista'"
-        [class.active]="rolSeleccionado === 'especialista'"
-        (click)="rolSeleccionado = 'especialista'"
-      >
-        Soy Especialista
+
+      <!-- Botón Especialista -->
+      <button type="button" class="role-select-button" (click)="seleccionarRol('especialista')">
+        <img
+          src="https://placehold.co/100x100/dbeafe/1e3a8a?text=Doctor"
+          alt="Icono de especialista"
+          class="role-select-img"
+        />
+        <div class="role-select-text">
+          <span class="role-select-title">Soy Especialista</span>
+          <span class="role-select-desc"> Ofrecé tus servicios y atendé pacientes. </span>
+        </div>
       </button>
     </div>
 
-    <div class="status" aria-live="polite">{{ statusMsg }}</div>
+    <!--
+      Contenedor del formulario.
+      Se muestra solo DESPUÉS de seleccionar un rol.
+      La animación de entrada se aplica con CSS.
+    -->
+    <div *ngIf="rolSeleccionado" class="form-container">
+      <!-- +++ FIN CAMBIOS (Selección de Rol) +++ -->
 
-    <form
-      *ngIf="rolSeleccionado === 'paciente'"
-      [formGroup]="pacienteForm"
-      (ngSubmit)="registrar()"
-      novalidate
-    >
-      <div class="row">
-        <label for="p_nombre">Nombre</label>
-        <input
-          id="p_nombre"
-          type="text"
-          formControlName="nombre"
-          [attr.aria-invalid]="
-            pacienteForm.get('nombre')?.invalid && pacienteForm.get('nombre')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('nombre')?.invalid && pacienteForm.get('nombre')?.touched"
+      <!-- El selector de tabs original ahora sirve para CAMBIAR de rol si se equivocó -->
+      <div class="role-selector" role="tablist" aria-label="Seleccionar rol">
+        <button
+          role="tab"
+          [attr.aria-selected]="rolSeleccionado === 'paciente'"
+          [class.active]="rolSeleccionado === 'paciente'"
+          (click)="rolSeleccionado = 'paciente'"
         >
-          Nombre inválido (mínimo 2 letras).
-        </div>
+          Soy Paciente
+        </button>
+        <button
+          role="tab"
+          [attr.aria-selected]="rolSeleccionado === 'especialista'"
+          [class.active]="rolSeleccionado === 'especialista'"
+          (click)="rolSeleccionado = 'especialista'"
+        >
+          Soy Especialista
+        </button>
       </div>
 
-      <div class="row">
-        <label for="p_apellido">Apellido</label>
-        <input
-          id="p_apellido"
-          type="text"
-          formControlName="apellido"
-          [attr.aria-invalid]="
-            pacienteForm.get('apellido')?.invalid && pacienteForm.get('apellido')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('apellido')?.invalid && pacienteForm.get('apellido')?.touched"
-        >
-          Apellido inválido (mínimo 2 letras).
-        </div>
-      </div>
+      <div class="status" aria-live="polite">{{ statusMsg }}</div>
 
-      <div class="row">
-        <label for="p_edad">Edad</label>
-        <input
-          id="p_edad"
-          type="number"
-          formControlName="edad"
-          [attr.aria-invalid]="
-            pacienteForm.get('edad')?.invalid && pacienteForm.get('edad')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('edad')?.invalid && pacienteForm.get('edad')?.touched"
-        >
-          Edad requerida (0 a 120).
-        </div>
-      </div>
-
-      <div class="row">
-        <label for="p_dni">DNI</label>
-        <input
-          id="p_dni"
-          type="text"
-          formControlName="dni"
-          [attr.aria-invalid]="pacienteForm.get('dni')?.invalid && pacienteForm.get('dni')?.touched"
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('dni')?.invalid && pacienteForm.get('dni')?.touched"
-        >
-          DNI inválido (7 a 9 dígitos).
-        </div>
-      </div>
-
-      <div class="row">
-        <label for="p_obra">Obra Social</label>
-        <input
-          id="p_obra"
-          type="text"
-          formControlName="obraSocial"
-          [attr.aria-invalid]="
-            pacienteForm.get('obraSocial')?.invalid && pacienteForm.get('obraSocial')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('obraSocial')?.invalid && pacienteForm.get('obraSocial')?.touched"
-        >
-          Ingresá tu obra social.
-        </div>
-      </div>
-
-      <div class="row">
-        <label for="p_email">Correo electrónico</label>
-        <input
-          id="p_email"
-          type="email"
-          formControlName="email"
-          [attr.aria-invalid]="
-            pacienteForm.get('email')?.invalid && pacienteForm.get('email')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('email')?.invalid && pacienteForm.get('email')?.touched"
-        >
-          Email inválido.
-        </div>
-      </div>
-
-      <div class="row">
-        <label for="p_pass">Contraseña</label>
-        <input
-          id="p_pass"
-          type="password"
-          formControlName="password"
-          [attr.aria-invalid]="
-            pacienteForm.get('password')?.invalid && pacienteForm.get('password')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="pacienteForm.get('password')?.invalid && pacienteForm.get('password')?.touched"
-        >
-          Mínimo 6 caracteres.
-        </div>
-      </div>
-
-      <fieldset class="files">
-        <legend>Imágenes de perfil (2)</legend>
-
-        <label for="p_img1">Imagen 1</label>
-        <input
-          id="p_img1"
-          type="file"
-          accept="image/*"
-          (change)="onPacienteFileChange(1, $event)"
-        />
-        <div class="preview" *ngIf="pacientePreview1">
-          <img [src]="pacientePreview1" alt="Vista previa imagen 1" />
-        </div>
-        <div
-          class="progress"
-          *ngIf="pacienteProg1 > 0 && pacienteProg1 < 100"
-          aria-label="Progreso imagen 1"
-        >
-          <div class="bar" [style.width.%]="pacienteProg1"></div>
-        </div>
-
-        <label for="p_img2">Imagen 2</label>
-        <input
-          id="p_img2"
-          type="file"
-          accept="image/*"
-          (change)="onPacienteFileChange(2, $event)"
-        />
-        <div class="preview" *ngIf="pacientePreview2">
-          <img [src]="pacientePreview2" alt="Vista previa imagen 2" />
-        </div>
-        <div
-          class="progress"
-          *ngIf="pacienteProg2 > 0 && pacienteProg2 < 100"
-          aria-label="Progreso imagen 2"
-        >
-          <div class="bar" [style.width.%]="pacienteProg2"></div>
-        </div>
-
-        <div class="err" *ngIf="(!pacienteFile1 || !pacienteFile2) && pacienteForm.touched">
-          Debes subir las 2 imágenes.
-        </div>
-      </fieldset>
-
-      <button
-        type="submit"
-        class="btn-submit"
-        [disabled]="pacienteForm.invalid || !pacienteFile1 || !pacienteFile2"
+      <form
+        *ngIf="rolSeleccionado === 'paciente'"
+        [formGroup]="pacienteForm"
+        (ngSubmit)="registrar()"
+        novalidate
       >
-        Registrarme
-      </button>
-    </form>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="p_nombre">Nombre</label>
+            <input id="p_nombre" type="text" formControlName="nombre" />
+            <div
+              class="err"
+              *ngIf="pacienteForm.get('nombre')?.invalid && pacienteForm.get('nombre')?.touched"
+            >
+              Nombre inválido (mínimo 2 letras).
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="p_apellido">Apellido</label>
+            <input id="p_apellido" type="text" formControlName="apellido" />
+            <div
+              class="err"
+              *ngIf="pacienteForm.get('apellido')?.invalid && pacienteForm.get('apellido')?.touched"
+            >
+              Apellido inválido (mínimo 2 letras).
+            </div>
+          </div>
 
-    <form
-      *ngIf="rolSeleccionado === 'especialista'"
-      [formGroup]="especialistaForm"
-      (ngSubmit)="registrar()"
-      novalidate
-    >
-      <div class="row">
-        <label for="e_nombre">Nombre</label>
-        <input
-          id="e_nombre"
-          type="text"
-          formControlName="nombre"
-          [attr.aria-invalid]="
-            especialistaForm.get('nombre')?.invalid && especialistaForm.get('nombre')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="especialistaForm.get('nombre')?.invalid && especialistaForm.get('nombre')?.touched"
+          <div class="form-field">
+            <label for="p_email">Correo electrónico</label>
+            <input id="p_email" type="email" formControlName="email" />
+            <div
+              class="err"
+              *ngIf="pacienteForm.get('email')?.invalid && pacienteForm.get('email')?.touched"
+            >
+              Email inválido.
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="p_pass">Contraseña</label>
+            <input id="p_pass" type="password" formControlName="password" />
+            <div
+              class="err"
+              *ngIf="pacienteForm.get('password')?.invalid && pacienteForm.get('password')?.touched"
+            >
+              Mínimo 6 caracteres.
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="p_edad">Edad</label>
+            <input id="p_edad" type="number" formControlName="edad" />
+            <div
+              class="err"
+              *ngIf="pacienteForm.get('edad')?.invalid && pacienteForm.get('edad')?.touched"
+            >
+              Edad requerida (0 a 120).
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="p_dni">DNI</label>
+            <input id="p_dni" type="text" formControlName="dni" />
+            <div
+              class="err"
+              *ngIf="pacienteForm.get('dni')?.invalid && pacienteForm.get('dni')?.touched"
+            >
+              DNI inválido (7 a 9 dígitos).
+            </div>
+          </div>
+
+          <div class="form-field full-width">
+            <label for="p_obra">Obra Social</label>
+            <input id="p_obra" type="text" formControlName="obraSocial" />
+            <div
+              class="err"
+              *ngIf="
+                pacienteForm.get('obraSocial')?.invalid && pacienteForm.get('obraSocial')?.touched
+              "
+            >
+              Ingresá tu obra social.
+            </div>
+          </div>
+
+          <fieldset class="files full-width">
+            <legend>Imágenes de perfil (2)</legend>
+
+            <div class="file-inputs">
+              <div class="form-field">
+                <label for="p_img1">Imagen 1</label>
+                <input
+                  id="p_img1"
+                  type="file"
+                  class="input-file"
+                  accept="image/*"
+                  (change)="onPacienteFileChange(1, $event)"
+                />
+                <div class="preview" *ngIf="pacientePreview1">
+                  <img [src]="pacientePreview1" alt="Vista previa imagen 1" />
+                </div>
+                <div class="progress" *ngIf="pacienteProg1 > 0 && pacienteProg1 < 100">
+                  <div class="bar" [style.width.%]="pacienteProg1"></div>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="p_img2">Imagen 2</label>
+                <input
+                  id="p_img2"
+                  type="file"
+                  class="input-file"
+                  accept="image/*"
+                  (change)="onPacienteFileChange(2, $event)"
+                />
+                <div class="preview" *ngIf="pacientePreview2">
+                  <img [src]="pacientePreview2" alt="Vista previa imagen 2" />
+                </div>
+                <div class="progress" *ngIf="pacienteProg2 > 0 && pacienteProg2 < 100">
+                  <div class="bar" [style.width.%]="pacienteProg2"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="err" *ngIf="(!pacienteFile1 || !pacienteFile2) && pacienteForm.touched">
+              Debes subir las 2 imágenes.
+            </div>
+          </fieldset>
+
+          <!-- +++ INICIO CAMBIOS (CAPTCHA) +++ -->
+          <div class="form-field full-width captcha-container">
+            <ngx-recaptcha2
+              [siteKey]="recaptchaSiteKey"
+              formControlName="recaptcha"
+            ></ngx-recaptcha2>
+            <div
+              class="err"
+              *ngIf="
+                pacienteForm.get('recaptcha')?.invalid && pacienteForm.get('recaptcha')?.touched
+              "
+            >
+              Por favor, verificá que no sos un robot.
+            </div>
+          </div>
+          <!-- +++ FIN CAMBIOS (CAPTCHA) +++ -->
+        </div>
+
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="pacienteForm.invalid || !pacienteFile1 || !pacienteFile2"
         >
-          Nombre inválido (mínimo 2 letras).
-        </div>
-      </div>
+          Registrarme
+        </button>
+      </form>
 
-      <div class="row">
-        <label for="e_apellido">Apellido</label>
-        <input
-          id="e_apellido"
-          type="text"
-          formControlName="apellido"
-          [attr.aria-invalid]="
-            especialistaForm.get('apellido')?.invalid && especialistaForm.get('apellido')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="
-            especialistaForm.get('apellido')?.invalid && especialistaForm.get('apellido')?.touched
-          "
-        >
-          Apellido inválido (mínimo 2 letras).
-        </div>
-      </div>
-
-      <div class="row">
-        <label for="e_edad">Edad</label>
-        <input
-          id="e_edad"
-          type="number"
-          formControlName="edad"
-          [attr.aria-invalid]="
-            especialistaForm.get('edad')?.invalid && especialistaForm.get('edad')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="especialistaForm.get('edad')?.invalid && especialistaForm.get('edad')?.touched"
-        >
-          Edad requerida (0 a 120).
-        </div>
-      </div>
-
-      <div class="row">
-        <label for="e_dni">DNI</label>
-        <input
-          id="e_dni"
-          type="text"
-          formControlName="dni"
-          [attr.aria-invalid]="
-            especialistaForm.get('dni')?.invalid && especialistaForm.get('dni')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="especialistaForm.get('dni')?.invalid && especialistaForm.get('dni')?.touched"
-        >
-          DNI inválido (7 a 9 dígitos).
-        </div>
-      </div>
-
-      <label>Especialidad</label>
-      <div class="row">
-        <select (change)="agregarEspecialidadPredef($any($event.target).value)">
-          <option value="">-- Elegí una especialidad --</option>
-          <option *ngFor="let esp of especialidadesDisponibles" [value]="esp">{{ esp }}</option>
-        </select>
-      </div>
-
-      <div class="row add-other">
-        <label for="e_otra">Agregar otra especialidad</label>
-        <div class="add-other__row">
-          <input
-            id="e_otra"
-            type="text"
-            placeholder="Ej: Oncología"
-            [(ngModel)]="nuevaEspecialidad"
-            name="otraEsp"
-            [ngModelOptions]="{ standalone: true }"
-          />
-          <button type="button" class="btn-mini" (click)="agregarEspecialidadManual()">
-            Agregar
-          </button>
-        </div>
-      </div>
-
-      <div class="chips">
-        <span class="chip" *ngFor="let esp of especialidadesFA.controls; let i = index">
-          {{ esp.value }}
-          <button
-            type="button"
-            class="chip-x"
-            (click)="quitarEspecialidad(i)"
-            aria-label="Quitar {{ esp.value }}"
-          >
-            ×
-          </button>
-        </span>
-      </div>
-      <div
-        class="err"
-        *ngIf="especialistaForm.get('especialidades')?.errors?.['atLeastOne'] && especialistaForm.get('especialidades')?.touched"
+      <form
+        *ngIf="rolSeleccionado === 'especialista'"
+        [formGroup]="especialistaForm"
+        (ngSubmit)="registrar()"
+        novalidate
       >
-        Debe haber al menos una especialidad.
-      </div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="e_nombre">Nombre</label>
+            <input id="e_nombre" type="text" formControlName="nombre" />
+            <div
+              class="err"
+              *ngIf="
+                especialistaForm.get('nombre')?.invalid && especialistaForm.get('nombre')?.touched
+              "
+            >
+              Nombre inválido (mínimo 2 letras).
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="e_apellido">Apellido</label>
+            <input id="e_apellido" type="text" formControlName="apellido" />
+            <div
+              class="err"
+              *ngIf="
+                especialistaForm.get('apellido')?.invalid &&
+                especialistaForm.get('apellido')?.touched
+              "
+            >
+              Apellido inválido (mínimo 2 letras).
+            </div>
+          </div>
 
-      <div class="row">
-        <label for="e_email">Correo electrónico</label>
-        <input
-          id="e_email"
-          type="email"
-          formControlName="email"
-          [attr.aria-invalid]="
-            especialistaForm.get('email')?.invalid && especialistaForm.get('email')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="especialistaForm.get('email')?.invalid && especialistaForm.get('email')?.touched"
-        >
-          Email inválido.
+          <div class="form-field">
+            <label for="e_email">Correo electrónico</label>
+            <input id="e_email" type="email" formControlName="email" />
+            <div
+              class="err"
+              *ngIf="
+                especialistaForm.get('email')?.invalid && especialistaForm.get('email')?.touched
+              "
+            >
+              Email inválido.
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="e_pass">Contraseña</label>
+            <input id="e_pass" type="password" formControlName="password" />
+            <div
+              class="err"
+              *ngIf="
+                especialistaForm.get('password')?.invalid &&
+                especialistaForm.get('password')?.touched
+              "
+            >
+              Mínimo 6 caracteres.
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="e_edad">Edad</label>
+            <input id="e_edad" type="number" formControlName="edad" />
+            <div
+              class="err"
+              *ngIf="especialistaForm.get('edad')?.invalid && especialistaForm.get('edad')?.touched"
+            >
+              Edad requerida (0 a 120).
+            </div>
+          </div>
+          <div class="form-field">
+            <label for="e_dni">DNI</label>
+            <input id="e_dni" type="text" formControlName="dni" />
+            <div
+              class="err"
+              *ngIf="especialistaForm.get('dni')?.invalid && especialistaForm.get('dni')?.touched"
+            >
+              DNI inválido (7 a 9 dígitos).
+            </div>
+          </div>
+
+          <div class="form-field full-width">
+            <label>Especialidad</label>
+            <select (change)="agregarEspecialidadPredef($any($event.target).value)">
+              <option value="">-- Elegí una especialidad --</option>
+              <option *ngFor="let esp of especialidadesDisponibles" [value]="esp">{{ esp }}</option>
+            </select>
+
+            <div class="add-other">
+              <label for="e_otra" class="add-other__label">Agregar otra especialidad</label>
+              <div class="add-other__row">
+                <input
+                  id="e_otra"
+                  type="text"
+                  placeholder="Ej: Oncología"
+                  [(ngModel)]="nuevaEspecialidad"
+                  name="otraEsp"
+                  [ngModelOptions]="{ standalone: true }"
+                />
+                <button type="button" class="btn-mini" (click)="agregarEspecialidadManual()">
+                  Agregar
+                </button>
+              </div>
+            </div>
+
+            <div class="chips">
+              <span class="chip" *ngFor="let esp of especialidadesFA.controls; let i = index">
+                {{ esp.value }}
+                <button
+                  type="button"
+                  class="chip-x"
+                  (click)="quitarEspecialidad(i)"
+                  aria-label="Quitar {{ esp.value }}"
+                >
+                  ×
+                </button>
+              </span>
+            </div>
+            <div
+              class="err"
+              *ngIf="especialistaForm.get('especialidades')?.errors?.['atLeastOne'] && especialistaForm.get('especialidades')?.touched"
+            >
+              Debe haber al menos una especialidad.
+            </div>
+          </div>
+
+          <fieldset class="files full-width">
+            <legend>Imagen de perfil (opcional)</legend>
+            <label for="e_img">Seleccionar imagen</label>
+            <input
+              id="e_img"
+              type="file"
+              class="input-file"
+              accept="image/*"
+              (change)="onEspecialistaFileChange($event)"
+            />
+            <div class="preview" *ngIf="especialistaPreview">
+              <img [src]="especialistaPreview" alt="Vista previa imagen de especialista" />
+            </div>
+            <div class="progress" *ngIf="especialistaProg > 0 && especialistaProg < 100">
+              <div class="bar" [style.width.%]="especialistaProg"></div>
+            </div>
+          </fieldset>
+
+          <!-- +++ INICIO CAMBIOS (CAPTCHA) +++ -->
+          <div class="form-field full-width captcha-container">
+            <ngx-recaptcha2
+              [siteKey]="recaptchaSiteKey"
+              formControlName="recaptcha"
+            ></ngx-recaptcha2>
+            <div
+              class="err"
+              *ngIf="
+                especialistaForm.get('recaptcha')?.invalid &&
+                especialistaForm.get('recaptcha')?.touched
+              "
+            >
+              Por favor, verificá que no sos un robot.
+            </div>
+          </div>
+          <!-- +++ FIN CAMBIOS (CAPTCHA) +++ -->
         </div>
-      </div>
 
-      <div class="row">
-        <label for="e_pass">Contraseña</label>
-        <input
-          id="e_pass"
-          type="password"
-          formControlName="password"
-          [attr.aria-invalid]="
-            especialistaForm.get('password')?.invalid && especialistaForm.get('password')?.touched
-          "
-        />
-        <div
-          class="err"
-          *ngIf="
-            especialistaForm.get('password')?.invalid && especialistaForm.get('password')?.touched
-          "
-        >
-          Mínimo 6 caracteres.
-        </div>
-      </div>
+        <button type="submit" class="btn-submit" [disabled]="especialistaForm.invalid">
+          Registrarme
+        </button>
+      </form>
 
-      <fieldset class="files">
-        <legend>Imagen de perfil (opcional)</legend>
-        <label for="e_img">Seleccionar imagen</label>
-        <input
-          id="e_img"
-          type="file"
-          accept="image/*"
-          (change)="onEspecialistaFileChange($event)"
-        />
-        <div class="preview" *ngIf="especialistaPreview">
-          <img [src]="especialistaPreview" alt="Vista previa imagen de especialista" />
-        </div>
-        <div
-          class="progress"
-          *ngIf="especialistaProg > 0 && especialistaProg < 100"
-          aria-label="Progreso imagen"
-        >
-          <div class="bar" [style.width.%]="especialistaProg"></div>
-        </div>
-      </fieldset>
+      <div class="login-link">¿Ya tenés cuenta? <a (click)="irALogin()">Ingresá aquí</a></div>
 
-      <button type="submit" class="btn-submit" [disabled]="especialistaForm.invalid">
-        Registrarme
-      </button>
-    </form>
-
-    <div class="login-link">¿Ya tenés cuenta? <a (click)="irALogin()">Ingresá aquí</a></div>
+      <!-- +++ INICIO CAMBIOS (Selección de Rol) +++ -->
+      <!-- Cerramos el div 'form-container' -->
+    </div>
+    <!-- +++ FIN CAMBIOS (Selección de Rol) +++ -->
   </div>
 </div>

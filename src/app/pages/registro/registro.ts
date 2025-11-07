@@ -18,6 +18,11 @@ import { UsuarioService } from '../../services/usuario.service';
 import { ImageUtilsService } from '../../services/image-utils.service';
 import { DniValidatorService } from '../../services/dni-validator.service';
 
+// +++ INICIO CAMBIOS (CAPTCHA) +++
+// Importamos el módulo de ngx-captcha
+import { NgxCaptchaModule } from 'ngx-captcha';
+// +++ FIN CAMBIOS (CAPTCHA) +++
+
 const NAME_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
 const DNI_PATTERN = /^\d{7,9}$/;
 function atLeastOne(control: AbstractControl): ValidationErrors | null {
@@ -45,7 +50,10 @@ function trimSpaces(s: string) {
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
+  // +++ INICIO CAMBIOS (CAPTCHA) +++
+  // Agregamos NgxCaptchaModule a los imports del componente
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, NgxCaptchaModule],
+  // +++ FIN CAMBIOS (CAPTCHA) +++
   templateUrl: './registro.html',
   styleUrls: ['./registro.scss'],
 })
@@ -58,7 +66,18 @@ export class RegistroComponent {
   private dniVal = inject(DniValidatorService);
   private router = inject(Router);
 
-  rolSeleccionado: 'paciente' | 'especialista' = 'paciente';
+  // --- MODIFICADO (Selección de Rol) ---
+  // Inicia como 'null' para mostrar la pantalla de selección primero.
+  rolSeleccionado: 'paciente' | 'especialista' | null = null;
+  // --- FIN MODIFICADO ---
+
+  // +++ INICIO CAMBIOS (CAPTCHA) +++
+  /**
+   * Clave del sitio de Google reCAPTCHA v2.
+   * ¡PEGÁ ACÁ TU CLAVE DE SITIO NUEVA! (La que empieza con "6L...")
+   */
+  recaptchaSiteKey = 'PONÉ_ACÁ_TU_NUEVA_CLAVE_DE_SITIO';
+  // +++ FIN CAMBIOS (CAPTCHA) +++
 
   // Archivos + previews + progreso
   pacienteFile1: File | null = null;
@@ -85,6 +104,16 @@ export class RegistroComponent {
   ];
   nuevaEspecialidad = '';
 
+  // +++ INICIO CAMBIOS (Selección de Rol) +++
+  /**
+   * Asigna el rol seleccionado y muestra el formulario correspondiente.
+   * @param rol 'paciente' o 'especialista'
+   */
+  seleccionarRol(rol: 'paciente' | 'especialista') {
+    this.rolSeleccionado = rol;
+  }
+  // +++ FIN CAMBIOS (Selección de Rol) +++
+
   pacienteForm: FormGroup = this.fb.group({
     nombre: ['', [Validators.required, Validators.pattern(NAME_PATTERN)]],
     apellido: ['', [Validators.required, Validators.pattern(NAME_PATTERN)]],
@@ -93,6 +122,9 @@ export class RegistroComponent {
     obraSocial: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
+    // +++ INICIO CAMBIOS (CAPTCHA) +++
+    recaptcha: ['', Validators.required],
+    // +++ FIN CAMBIOS (CAPTCHA) +++
   });
 
   especialistaForm: FormGroup = this.fb.group({
@@ -103,6 +135,9 @@ export class RegistroComponent {
     especialidades: this.fb.array<string>([], { validators: atLeastOne }),
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
+    // +++ INICIO CAMBIOS (CAPTCHA) +++
+    recaptcha: ['', Validators.required],
+    // +++ FIN CAMBIOS (CAPTCHA) +++
   });
 
   get especialidadesFA(): FormArray {

@@ -4,6 +4,17 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
+// +++ INICIO CAMBIOS (FAB) +++
+// Interface para los usuarios de acceso rápido
+interface QuickAccessUser {
+  nombre: string;
+  rol: string;
+  email: string;
+  password: string;
+  img: string;
+}
+// +++ FIN CAMBIOS (FAB) +++
+
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -33,6 +44,69 @@ export class LoginComponent implements OnDestroy {
   // UX
   showPassword = false;
   isSubmitting = false;
+
+  // +++ INICIO CAMBIOS (FAB) +++
+  /**
+   * Controla si el menú FAB (Floating Action Button) está abierto.
+   */
+  isFabOpen = false;
+
+  /**
+   * Lista de los 6 usuarios para acceso rápido según lo solicitado.
+   * Usamos placehold.co para las imágenes de perfil.
+   */
+  quickAccessUsers: QuickAccessUser[] = [
+    {
+      nombre: 'Admin',
+      rol: 'Administrador',
+      email: 'admin@demo.com',
+      password: '123456',
+      img: 'https://placehold.co/60x60/334155/FFFFFF?text=A',
+    },
+    {
+      nombre: 'Dr. Demo',
+      rol: 'Especialista',
+      email: 'especialista@demo.com',
+      password: '123456',
+      img: 'https://placehold.co/60x60/1d4ed8/FFFFFF?text=E1',
+    },
+    {
+      nombre: 'Dra. Demo',
+      rol: 'Especialista',
+      email: 'especialista2@demo.com',
+      password: '123456',
+      img: 'https://placehold.co/60x60/1e3a8a/FFFFFF?text=E2',
+    },
+    {
+      nombre: 'Paciente 1',
+      rol: 'Paciente',
+      email: 'paciente@demo.com',
+      password: '123456',
+      img: 'https://placehold.co/60x60/60a5fa/FFFFFF?text=P1',
+    },
+    {
+      nombre: 'Paciente 2',
+      rol: 'Paciente',
+      email: 'paciente2@demo.com',
+      password: '123456',
+      img: 'https://placehold.co/60x60/3b82f6/FFFFFF?text=P2',
+    },
+    {
+      nombre: 'Paciente 3',
+      rol: 'Paciente',
+      email: 'paciente3@demo.com',
+      password: '123456',
+      img: 'https://placehold.co/60x60/2563eb/FFFFFF?text=P3',
+    },
+  ];
+
+  /**
+   * Alterna la visibilidad del menú FAB.
+   */
+  toggleFab() {
+    this.isFabOpen = !this.isFabOpen;
+  }
+  // +++ FIN CAMBIOS (FAB) +++
 
   ngOnDestroy(): void {
     if (this.cooldownTimer) clearInterval(this.cooldownTimer);
@@ -81,14 +155,17 @@ export class LoginComponent implements OnDestroy {
   }
 
   // Accesos rápidos
-  accesoRapido(tipo: 'paciente' | 'especialista' | 'admin') {
-    const presets: any = {
-      paciente: { email: 'paciente@demo.com', password: '123456', remember: true },
-      especialista: { email: 'especialista@demo.com', password: '123456', remember: true },
-      admin: { email: 'admin@demo.com', password: '123456', remember: true },
-    };
-    this.loginForm.patchValue(presets[tipo]);
+  // --- MODIFICADO (FAB) ---
+  // Ahora recibe el objeto de usuario completo y cierra el FAB.
+  accesoRapido(user: QuickAccessUser) {
+    this.loginForm.patchValue({
+      email: user.email,
+      password: user.password,
+      remember: true,
+    });
+    this.isFabOpen = false;
   }
+  // --- FIN MODIFICADO (FAB) ---
 
   // Reenviar verificación con cooldown
   async reenviarVerificacion() {
@@ -139,5 +216,12 @@ export class LoginComponent implements OnDestroy {
 
   irARegistro() {
     this.router.navigate(['/registro']);
+  }
+
+  /**
+   * FIX: Agregamos la función para volver a Bienvenida
+   */
+  volverABienvenida() {
+    this.router.navigate(['/bienvenida']);
   }
 }

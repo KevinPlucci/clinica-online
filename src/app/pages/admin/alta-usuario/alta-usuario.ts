@@ -15,6 +15,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AdminUserService, RolAlta } from '../../../services/admin-user.service';
+import { ToastService } from '../../../shared/toast.service'; // <-- 1. IMPORTAR TOASTS
 
 const NAME_PATTERN = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]{2,}$/;
 const DNI_PATTERN = /^\d{7,9}$/;
@@ -38,6 +39,7 @@ export class AltaUsuarioComponent {
   private fb = inject(FormBuilder);
   private adminUser = inject(AdminUserService);
   private router = inject(Router);
+  private toasts = inject(ToastService); // <-- 2. INYECTAR TOASTS
 
   rol: RolAlta = 'paciente';
 
@@ -85,11 +87,13 @@ export class AltaUsuarioComponent {
     const file = input.files && input.files[0] ? input.files[0] : null;
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-      alert('El archivo debe ser una imagen.');
+      // FIX: Reemplazamos alert() por toasts.error()
+      this.toasts.error('El archivo debe ser una imagen.');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('La imagen no puede superar los 5MB.');
+      // FIX: Reemplazamos alert() por toasts.error()
+      this.toasts.error('La imagen no puede superar los 5MB.');
       return;
     }
     if (which === 'pac1') this.pacienteImg1 = file;
@@ -119,29 +123,34 @@ export class AltaUsuarioComponent {
       especialistaImg: this.especialistaImg,
       adminImg: this.adminImg,
     } as any;
+
+    // FIX: Reemplazamos los alerts de validación por toasts.warning()
     if (this.rol === 'paciente' && (!this.pacienteImg1 || !this.pacienteImg2)) {
-      alert('El paciente requiere 2 imágenes de perfil.');
+      this.toasts.warning('El paciente requiere 2 imágenes de perfil.');
       return;
     }
     if (this.rol === 'especialista' && !this.especialistaImg) {
-      alert('El especialista requiere 1 imagen de perfil.');
+      this.toasts.warning('El especialista requiere 1 imagen de perfil.');
       return;
     }
     if (this.rol === 'admin' && !this.adminImg) {
-      alert('El administrador requiere 1 imagen de perfil.');
+      this.toasts.warning('El administrador requiere 1 imagen de perfil.');
       return;
     }
     if (this.rol === 'especialista' && this.especialidadesFA.length === 0) {
-      alert('Debés agregar al menos una especialidad.');
+      this.toasts.warning('Debés agregar al menos una especialidad.');
       return;
     }
+
     try {
       await this.adminUser.crearUsuarioComoAdmin(payload);
-      alert('Usuario creado. Se envió un email de verificación.');
+      // FIX: Reemplazamos alert() por toasts.success()
+      this.toasts.success('Usuario creado. Se envió un email de verificación.');
       this.router.navigate(['/admin/usuarios']);
     } catch (e: any) {
       console.error(e);
-      alert(e?.message || 'No se pudo crear el usuario.');
+      // FIX: Reemplazamos alert() por toasts.error()
+      this.toasts.error(e?.message || 'No se pudo crear el usuario.');
     }
   }
 
@@ -149,9 +158,6 @@ export class AltaUsuarioComponent {
     this.router.navigate(['/admin/usuarios']);
   }
 
-  /**
-   * FIX: Agregamos esta función para el botón de "Volver"
-   */
   volver() {
     this.router.navigate(['/admin/usuarios']);
   }

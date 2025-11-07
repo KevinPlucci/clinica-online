@@ -1,5 +1,7 @@
 <main class="welcome" id="main-content">
+   
   <section class="hero container" aria-labelledby="bienvenida-title">
+       
     <img
       class="hero__logo"
       src="assets/logo-clinica.png"
@@ -9,27 +11,42 @@
       decoding="async"
     />
 
+       
     <h1 id="bienvenida-title" class="hero__title">Bienvenido/a a Clínica Online</h1>
+       
     <p class="hero__subtitle">Accedé a tu cuenta o creá un perfil para comenzar.</p>
 
+       
     <ng-container *ngIf="me$ | async as me; else anon">
+           
       <div class="cta">
+               
         <a class="btn btn-primary" [routerLink]="getPanelLink(me?.rol)" aria-label="Ir al panel">
-          Ir al panel
+                    Ir al panel        
         </a>
-        <button type="button" class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>
+               
+        <button type="button" class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>  
+           
       </div>
+         
     </ng-container>
 
+       
     <ng-template #anon>
+           
       <div class="cta">
+               
         <a class="btn btn-primary" routerLink="/login" aria-label="Ingresar al sistema">
-          Ingresar
+                    Ingresar        
         </a>
+               
         <a class="btn btn-secondary" routerLink="/registro" aria-label="Registrarse en el sistema">
-          Registrarse
+                    Registrarse        
         </a>
+             
       </div>
+         
     </ng-template>
+     
   </section>
 </main>
