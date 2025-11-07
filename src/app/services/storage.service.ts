@@ -1,5 +1,5 @@
 // src/app/services/storage.service.ts
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core'; // Importamos las herramientas
 import {
   Storage,
   ref,
@@ -11,17 +11,22 @@ import {
 @Injectable({ providedIn: 'root' })
 export class StorageService {
   private storage = inject(Storage);
+  // FIX: Inyectamos el EnvironmentInjector
+  private env = inject(EnvironmentInjector);
 
   /** Subida simple (sin progreso) con metadatos de caché */
   async uploadUsuarioImagen(uid: string, file: File, nombreArchivo: string): Promise<string> {
-    const safeName = nombreArchivo.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `usuarios/${uid}/${Date.now()}_${safeName}`;
-    const storageRef = ref(this.storage, path);
-    await uploadBytes(storageRef, file, {
-      contentType: file.type,
-      cacheControl: 'public,max-age=31536000,immutable',
+    // FIX: Envolvemos todas las llamadas a Firebase en el contexto de inyección
+    return runInInjectionContext(this.env, async () => {
+      const safeName = nombreArchivo.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `usuarios/${uid}/${Date.now()}_${safeName}`;
+      const storageRef = ref(this.storage, path);
+      await uploadBytes(storageRef, file, {
+        contentType: file.type,
+        cacheControl: 'public,max-age=31536000,immutable',
+      });
+      return await getDownloadURL(storageRef);
     });
-    return await getDownloadURL(storageRef);
   }
 
   /** Subida resumible con progreso + metadatos de caché */
@@ -31,27 +36,31 @@ export class StorageService {
     nombreArchivo: string,
     onProgress?: (percent: number) => void
   ): Promise<string> {
-    const safeName = nombreArchivo.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `usuarios/${uid}/${Date.now()}_${safeName}`;
-    const storageRef = ref(this.storage, path);
-    const task = uploadBytesResumable(storageRef, file, {
-      contentType: file.type,
-      cacheControl: 'public,max-age=31536000,immutable',
-    });
+    // FIX: Envolvemos todas las llamadas a Firebase en el contexto de inyección
+    return runInInjectionContext(this.env, () => {
+      const safeName = nombreArchivo.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `usuarios/${uid}/${Date.now()}_${safeName}`;
+      const storageRef = ref(this.storage, path);
+      const task = uploadBytesResumable(storageRef, file, {
+        contentType: file.type,
+        cacheControl: 'public,max-age=31536000,immutable',
+      });
 
-    return new Promise((resolve, reject) => {
-      task.on(
-        'state_changed',
-        (snap) => {
-          const pct = Math.round((snap.bytesTransferred / (snap.totalBytes || 1)) * 100);
-          onProgress?.(pct);
-        },
-        (err) => reject(err),
-        async () => {
-          const url = await getDownloadURL(storageRef);
-          resolve(url);
-        }
-      );
+      return new Promise((resolve, reject) => {
+        task.on(
+          'state_changed',
+          (snap) => {
+            const pct = Math.round((snap.bytesTransferred / (snap.totalBytes || 1)) * 100);
+            onProgress?.(pct);
+          },
+          (err) => reject(err),
+          async () => {
+            // FIX: getDownloadURL también debe estar dentro del contexto
+            const url = await getDownloadURL(storageRef);
+            resolve(url);
+          }
+        );
+      });
     });
   }
 }
