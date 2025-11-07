@@ -1,12 +1,30 @@
-// Contenedor principal
+/* +++ INICIO MODIFICACIÓN (Fondo de Pantalla) +++ */
+/* Aplicamos el fondo a toda la página del componente */
+:host {
+  display: block; // Asegura que el host ocupe espacio
+  min-height: 100vh; // Ocupa toda la altura
+  padding: 2rem; // Espacio en bordes (móvil)
+  box-sizing: border-box;
+
+  /* La ruta sube 4 niveles: solicitar-turno -> pages -> app -> src */
+  background-image: url('../../../../assets/fondo_de_pantalla.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+/* +++ FIN MODIFICACIÓN +++ */
+
+// --- Contenedor Principal (AHORA ES LA TARJETA) ---
 .solicitar-container {
   max-width: 900px;
-  margin: 2rem auto;
-  padding: 1rem 2rem 2rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin: 0 auto; /* +++ Centrado automático +++ */
+  padding: 2.5rem; /* +++ Padding de tarjeta +++ */
+  background: rgba(255, 255, 255, 0.98); /* +++ Fondo blanco +++ */
+  border-radius: 16px; /* +++ Bordes redondeados +++ */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* +++ Sombra +++ */
   font-family: sans-serif;
+  width: 100%; /* +++ Asegura que ocupe el max-width +++ */
+  box-sizing: border-box; /* +++ Añadido +++ */
 }
 
 .solicitar-header {
@@ -134,17 +152,31 @@
 // Calendario (Paso 3)
 .calendario-container {
   display: flex;
+  /* +++ Responsive: stack en móvil +++ */
+  flex-direction: column;
   gap: 2rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 1.5rem;
   min-height: 400px;
+
+  /* +++ Media query para PC +++ */
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
 }
 
 .dias-lista {
   flex: 1;
-  border-right: 1px solid #e2e8f0;
-  padding-right: 2rem;
+  border-right: 0; /* +++ Responsive +++ */
+  padding-right: 0; /* +++ Responsive +++ */
+
+  /* +++ Media query para PC +++ */
+  @media (min-width: 768px) {
+    border-right: 1px solid #e2e8f0;
+    padding-right: 2rem;
+  }
+
 
   h3 { margin-top: 0; }
   .btn-selector.dia {
@@ -237,7 +269,8 @@
 /* --- Estilos de Botones (similares a los de bienvenida) --- */
 .btn,
 .btn-primary,
-.btn-secondary {
+.btn-secondary,
+.btn-success {
   display: inline-block;
   padding: 0.6rem 1.2rem;
   border: 1px solid transparent;
@@ -265,4 +298,12 @@
   color: #1e293b;
   border-color: #cbd5e1;
   &:hover { background: #cbd5e1; }
+}
+
+/* +++ Botón Success (copiado de mis-turnos) +++ */
+.btn-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+  &:hover { background: #dcfce7; }
 }

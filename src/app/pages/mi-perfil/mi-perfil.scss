@@ -1,16 +1,56 @@
-// Contenedor principal
-.perfil-container {
-  max-width: 900px;
-  margin: 2rem auto;
-  padding: 1rem 2rem 2rem;
-  font-family: sans-serif;
+/* +++ INICIO MODIFICACIÓN (Fondo de Pantalla) +++ */
+/* Aplicamos el fondo a toda la página del componente */
+:host {
+  display: block; // Asegura que el host ocupe espacio
+  min-height: 100vh; // Ocupa toda la altura
+  padding: 2rem; // Espacio en bordes (móvil)
+  box-sizing: border-box;
+
+  /* La ruta sube 4 niveles: mi-perfil -> pages -> app -> src */
+  background-image: url('../../../assets/fondo_de_pantalla.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }
 
+/* El contenedor principal ahora es el wrapper para centrar la tarjeta */
+.perfil-container {
+  padding: 0;
+  font-family: sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+/* +++ FIN MODIFICACIÓN +++ */
+
+
+/* +++ MODIFICACIÓN: Esta es ahora nuestra "tarjeta" flotante +++ */
+.perfil-card {
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+  /* +++ MODIFICACIÓN: El padding ahora está adentro +++ */
+  padding: 0; // Lo quitamos para que el header ocupe todo
+  overflow: hidden; // Para que el header respete el border-radius
+
+  max-width: 900px;
+  width: 100%;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+/* +++ FIN MODIFICACIÓN +++ */
+
+
+/* +++ MODIFICACIÓN: Estilos del Header DENTRO de la card +++ */
 .perfil-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+
+  padding: 1.5rem 2.5rem; /* Padding interno del header */
+  border-bottom: 1px solid #e2e8f0; /* Borde separador */
+  margin-bottom: 0; /* Ya no necesita margen inferior */
 
   h1 {
     margin: 0;
@@ -18,58 +58,94 @@
     font-size: 1.8rem;
   }
 }
+/* +++ FIN MODIFICACIÓN +++ */
 
-.perfil-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
-}
 
+/* +++ INICIO MODIFICACIÓN (Diseño Moderno) +++ */
 // --- Info de Perfil ---
 .perfil-info {
-  display: flex;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: 1fr; /* Stack en móvil */
+  align-items: center;
+  gap: 1.5rem;
   border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 1.5rem;
-}
+  padding: 2.5rem; /* El padding del contenido está aquí ahora */
 
-.perfil-avatar img {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid #e0e7ff;
-}
-
-.perfil-datos h2 {
-  margin-top: 0;
-  margin-bottom: 0.25rem;
-  color: #1e293b;
-  font-size: 1.7rem;
-}
-.perfil-datos .rol {
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: #1d4ed8;
-  margin-top: 0;
-}
-.perfil-datos .dato {
-  font-size: 1rem;
-  color: #334155;
-  margin: 0.5rem 0;
-  .label {
-    font-weight: 600;
-    color: #1e293b;
-    margin-right: 0.5rem;
+  /* En pantallas grandes, 2 columnas (avatar | datos) */
+  @media (min-width: 640px) {
+    grid-template-columns: 140px 1fr;
+    gap: 2.5rem;
   }
 }
+
+.perfil-avatar {
+  justify-self: center; /* Centrado en móvil */
+  @media (min-width: 640px) {
+    justify-self: start; /* Izquierda en PC */
+  }
+
+  img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.perfil-datos {
+  text-align: center; /* Centrado en móvil */
+  @media (min-width: 640px) {
+    text-align: left; /* Izquierda en PC */
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 0.25rem;
+    color: #1e293b;
+    font-size: 1.7rem;
+  }
+  .rol {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #1d4ed8;
+    margin-top: 0;
+  }
+  .dato {
+    font-size: 1rem;
+    color: #1e293b; /* Texto de dato más oscuro */
+    margin: 0.75rem 0;
+
+    .label {
+      font-weight: 500;
+      color: #64748b; /* Label más suave */
+      display: block; /* Stack en móvil */
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+
+      @media (min-width: 640px) {
+        display: inline-block; /* Lado a lado en PC */
+        margin-bottom: 0;
+        margin-right: 0.75rem;
+      }
+    }
+  }
+}
+/* +++ FIN MODIFICACIÓN (Diseño Moderno) +++ */
+
 
 .chip-container {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.5rem;
+
+  /* +++ Alinear chips en PC +++ */
+  justify-content: center;
+  @media (min-width: 640px) {
+    justify-content: flex-start;
+  }
 }
 .chip {
   background: #e2e8f0;
@@ -80,7 +156,7 @@
 
 // --- Fotos Paciente ---
 .perfil-fotos {
-  padding: 1.5rem 0;
+  padding: 1.5rem 2.5rem; /* +++ Padding de contenido +++ */
   border-bottom: 1px solid #e2e8f0;
   h3 { margin-top: 0; }
   .fotos-grid {
@@ -97,7 +173,7 @@
 
 // --- Editor de Horarios ---
 .perfil-horarios {
-  padding-top: 1.5rem;
+  padding: 1.5rem 2.5rem 2.5rem 2.5rem; /* +++ Padding de contenido +++ */
 
   .horarios-header {
     display: flex;
@@ -154,6 +230,7 @@
 
 .horario-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
 
@@ -166,9 +243,11 @@
 
   select.form-input {
     flex-basis: 150px;
+    flex-grow: 1;
   }
   input[type="time"] {
     flex-basis: 110px;
+    flex-grow: 1;
   }
   label {
     font-size: 0.9rem;
@@ -185,6 +264,7 @@
     line-height: 1;
     cursor: pointer;
     font-weight: bold;
+    margin-left: auto;
     &:hover { background: #fecaca; }
   }
 }

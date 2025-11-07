@@ -1,12 +1,30 @@
-// --- Contenedor Principal ---
+/* +++ INICIO MODIFICACIÓN (Fondo de Pantalla) +++ */
+/* Aplicamos el fondo a toda la página del componente */
+:host {
+  display: block; // Asegura que el host ocupe espacio
+  min-height: 100vh; // Ocupa toda la altura
+  padding: 2rem; // Espacio en bordes (móvil)
+  box-sizing: border-box;
+
+  /* La ruta sube 4 niveles: mis-turnos -> pages -> app -> src */
+  background-image: url('../../../assets/fondo_de_pantalla.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+/* +++ FIN MODIFICACIÓN +++ */
+
+// --- Contenedor Principal (AHORA ES LA TARJETA) ---
 .turnos-container {
   max-width: 900px;
-  margin: 2rem auto;
-  padding: 1rem 2rem;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin: 0 auto; /* +++ Centrado automático +++ */
+  padding: 2.5rem; /* +++ Padding de tarjeta +++ */
+  background: rgba(255, 255, 255, 0.98); /* +++ Fondo blanco +++ */
+  border-radius: 16px; /* +++ Bordes redondeados +++ */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* +++ Sombra +++ */
   font-family: sans-serif;
+  width: 100%; /* +++ Asegura que ocupe el max-width +++ */
+  box-sizing: border-box; /* +++ Añadido +++ */
 }
 
 .turnos-header {
@@ -78,10 +96,15 @@
 
 .turno-card {
   display: grid;
-  grid-template-columns: 2fr 1fr 2fr;
+  /* +++ Responsive grid +++ */
+  grid-template-columns: 2fr 1fr; /* Stack estado/acciones en móvil */
+  grid-template-areas:
+    "info estado"
+    "info acciones";
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem 1rem;
   padding: 1.25rem;
+  background: #fff; /* +++ Fondo blanco para la tarjeta +++ */
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   transition: all 0.2s ease;
@@ -92,9 +115,16 @@
   &[data-estado='realizado'] { border-left: 5px solid #3b82f6; }
   &[data-estado='cancelado'] { border-left: 5px solid #ef4444; }
   &[data-estado='rechazado'] { border-left: 5px solid #713f12; }
+
+  /* +++ Media query para PC +++ */
+  @media (min-width: 768px) {
+    grid-template-columns: 2fr 1fr 2fr;
+    grid-template-areas: "info estado acciones";
+  }
 }
 
 .turno-info {
+  grid-area: info; /* +++ Asignación de área +++ */
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -118,7 +148,11 @@
 }
 
 .turno-estado {
-  text-align: center;
+  grid-area: estado; /* +++ Asignación de área +++ */
+  text-align: left; /* +++ Alineación móvil +++ */
+  @media (min-width: 768px) {
+    text-align: center; /* +++ Alineación PC +++ */
+  }
 }
 
 .estado-badge {
@@ -132,10 +166,14 @@
 }
 
 .turno-acciones {
+  grid-area: acciones; /* +++ Asignación de área +++ */
   display: flex;
-  flex-wrap: wrap; // Para que no se rompa en pantallas chicas
+  flex-wrap: wrap;
   gap: 0.5rem;
-  justify-content: flex-end;
+  justify-content: flex-start; /* +++ Alineación móvil +++ */
+  @media (min-width: 768px) {
+    justify-content: flex-end; /* +++ Alineación PC +++ */
+  }
 }
 
 // --- Modal ---
@@ -150,6 +188,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 1rem; /* +++ Padding móvil +++ */
 }
 
 .modal-content {

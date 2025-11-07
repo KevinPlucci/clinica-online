@@ -1,10 +1,11 @@
 <div class="perfil-container" *ngIf="me() as user; else loading">
-  <header class="perfil-header">
-    <h1>Mi Perfil</h1>
-    <a routerLink="/bienvenida" class="btn btn-secondary">← Volver</a>
-  </header>
-
+  <!-- +++ MODIFICACIÓN: El <header> se movió DENTRO del .perfil-card +++ -->
   <div class="perfil-card">
+    <header class="perfil-header">
+      <h1>Mi Perfil</h1>
+      <a routerLink="/bienvenida" class="btn btn-secondary">← Volver</a>
+    </header>
+
     <!-- Sección de Datos Personales -->
     <div class="perfil-info">
       <div class="perfil-avatar">
