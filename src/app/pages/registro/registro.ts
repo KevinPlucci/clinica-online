@@ -74,9 +74,9 @@ export class RegistroComponent {
   // +++ INICIO CAMBIOS (CAPTCHA) +++
   /**
    * Clave del sitio de Google reCAPTCHA v2.
-   * ¡PEGÁ ACÁ TU CLAVE DE SITIO NUEVA! (La que empieza con "6L...")
+   * ¡Esta es tu clave real!
    */
-  recaptchaSiteKey = 'PONÉ_ACÁ_TU_NUEVA_CLAVE_DE_SITIO';
+  recaptchaSiteKey = '6LemlAUsAAAAANt9cq6HCH07OHEs5edvecaOPxj4';
   // +++ FIN CAMBIOS (CAPTCHA) +++
 
   // Archivos + previews + progreso
