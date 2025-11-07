@@ -13,7 +13,8 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
-import { StorageService } from '../../services/storage.service';
+// ❌ Se deja de usar el StorageService directo
+// import { StorageService } from '../../services/storage.service';
 import { ImageUtilsService } from '../../services/image-utils.service';
 import { DniValidatorService } from '../../services/dni-validator.service';
 
@@ -52,7 +53,7 @@ export class RegistroComponent {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private usuarioService = inject(UsuarioService);
-  private storage = inject(StorageService);
+  // ❌ private storage = inject(StorageService);
   private imgUtils = inject(ImageUtilsService);
   private dniVal = inject(DniValidatorService);
   private router = inject(Router);
@@ -232,19 +233,18 @@ export class RegistroComponent {
         const c1 = await this.imgUtils.compressImage(this.pacienteFile1, 1024, 0.82, 'image/jpeg');
         const c2 = await this.imgUtils.compressImage(this.pacienteFile2, 1024, 0.82, 'image/jpeg');
 
+        // ✅ Subida con AngularFire (evita CORS)
         this.statusMsg = 'Subiendo imágenes (1/2)...';
-        const p1 = this.storage.uploadUsuarioImagenResumable(
-          uid,
+        const p1 = this.imgUtils.uploadToStorage(
+          `usuarios/${uid}/perfil_1.jpg`,
           c1,
-          'perfil_1.jpg',
           (pct) => (this.pacienteProg1 = pct)
         );
 
         this.statusMsg = 'Subiendo imágenes (2/2)...';
-        const p2 = this.storage.uploadUsuarioImagenResumable(
-          uid,
+        const p2 = this.imgUtils.uploadToStorage(
+          `usuarios/${uid}/perfil_2.jpg`,
           c2,
-          'perfil_2.jpg',
           (pct) => (this.pacienteProg2 = pct)
         );
 
@@ -305,10 +305,9 @@ export class RegistroComponent {
         );
 
         this.statusMsg = 'Subiendo imagen...';
-        const url = await this.storage.uploadUsuarioImagenResumable(
-          uid,
+        const url = await this.imgUtils.uploadToStorage(
+          `usuarios/${uid}/perfil.jpg`,
           comp,
-          'perfil.jpg',
           (pct) => (this.especialistaProg = pct)
         );
         await this.usuarioService.setUsuario(uid, { fotoURL: url });

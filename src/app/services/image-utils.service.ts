@@ -1,8 +1,120 @@
 // src/app/services/image-utils.service.ts
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import {
+  Storage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from '@angular/fire/storage';
+
+export interface UploadOptions {
+  /** Comprimir antes de subir (default: true) */
+  compress?: boolean;
+  /** Dimensión máxima de ancho/alto al comprimir (px) */
+  maxDim?: number;
+  /** Calidad JPEG [0..1] al comprimir */
+  quality?: number;
+  /** MIME de salida al comprimir (recomendado: 'image/jpeg') */
+  mime?: 'image/jpeg' | 'image/png' | 'image/webp';
+  /** Callback de progreso: 0..100 */
+  onProgress?: (percent: number) => void;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ImageUtilsService {
+  private storage = inject(Storage);
+
+  // ========== SUBIDAS A STORAGE ==========
+
+  /**
+   * Sube N imágenes de perfil a `usuarios/{uid}/perfil_{i}.jpg` y devuelve los downloadURL en orden.
+   */
+  async uploadProfileImages(
+    uid: string,
+    files: File[],
+    opts: UploadOptions = {}
+  ): Promise<string[]> {
+    const {
+      compress = true,
+      maxDim = 1024,
+      quality = 0.82,
+      mime = 'image/jpeg',
+      onProgress,
+    } = opts;
+
+    const urls: string[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const original = files[i];
+
+      const fileToSend =
+        compress && original.type.startsWith('image/')
+          ? await this.compressImage(original, maxDim, quality, mime)
+          : original;
+
+      // Fijamos .jpg por consistencia cuando se comprime a JPEG
+      const path =
+        compress && mime === 'image/jpeg'
+          ? `usuarios/${uid}/perfil_${i + 1}.jpg`
+          : `usuarios/${uid}/perfil_${i + 1}${this.extensionForMime(
+              (fileToSend as File).type || 'image/jpeg'
+            )}`;
+
+      const url = await this.uploadToStorage(path, fileToSend, onProgress);
+      urls.push(url);
+    }
+    return urls;
+  }
+
+  /**
+   * Sube un archivo (Blob/File) a la ruta indicada y devuelve su downloadURL.
+   */
+  async uploadToStorage(
+    path: string,
+    file: Blob | File,
+    onProgress?: (percent: number) => void
+  ): Promise<string> {
+    const contentType = (file as File).type || 'application/octet-stream';
+    const r = ref(this.storage, path);
+    const task = uploadBytesResumable(r, file, { contentType });
+
+    await new Promise<void>((resolve, reject) => {
+      task.on(
+        'state_changed',
+        (snap) => {
+          if (onProgress && snap.totalBytes > 0) {
+            const p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+            onProgress(p);
+          }
+        },
+        reject,
+        () => resolve()
+      );
+    });
+
+    return await getDownloadURL(r);
+  }
+
+  /**
+   * Borra un archivo en Storage (por si necesitás reemplazar/limpiar).
+   */
+  async deleteFromStorage(path: string): Promise<void> {
+    await deleteObject(ref(this.storage, path));
+  }
+
+  // ========== PREVIEW LOCAL ==========
+
+  /** Crea un ObjectURL para previsualizar un File al instante (acordate de revocarlo). */
+  createObjectURL(file: File): string {
+    return URL.createObjectURL(file);
+  }
+  /** Revoca un ObjectURL creado con createObjectURL. */
+  revokeObjectURL(url: string): void {
+    URL.revokeObjectURL(url);
+  }
+
+  // ========== COMPRESIÓN DE IMÁGENES ==========
+
   /**
    * Comprime una imagen en el navegador usando <canvas>.
    * @param file     File original (image/*)
@@ -14,7 +126,7 @@ export class ImageUtilsService {
     file: File,
     maxDim = 1024,
     quality = 0.82,
-    mime = 'image/jpeg'
+    mime: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg'
   ): Promise<File> {
     const dataUrl = await this.readAsDataURL(file);
     const img = await this.loadImage(dataUrl);
@@ -31,6 +143,8 @@ export class ImageUtilsService {
     const name = this.appendSuffix(file.name, '_compressed', mime);
     return new File([blob], name, { type: mime, lastModified: Date.now() });
   }
+
+  // ========== PRIVADOS / HELPERS ==========
 
   private readAsDataURL(file: File): Promise<string> {
     return new Promise((res, rej) => {
@@ -58,14 +172,20 @@ export class ImageUtilsService {
   }
 
   private canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
-    return new Promise((res) => {
-      canvas.toBlob((b) => res(b as Blob), type, quality);
+    return new Promise((res, rej) => {
+      canvas.toBlob((b) => (b ? res(b) : rej(new Error('toBlob() returned null'))), type, quality);
     });
   }
 
   private appendSuffix(originalName: string, suffix: string, mime: string) {
     const base = originalName.replace(/\.[^.]+$/, '');
-    const ext = mime === 'image/png' ? '.png' : '.jpg';
+    const ext = this.extensionForMime(mime);
     return `${base}${suffix}${ext}`;
+  }
+
+  private extensionForMime(mime: string): string {
+    if (mime === 'image/png') return '.png';
+    if (mime === 'image/webp') return '.webp';
+    return '.jpg'; // default para image/jpeg
   }
 }
