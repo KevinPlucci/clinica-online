@@ -6,10 +6,17 @@ import { SeccionUsuariosComponent } from './pages/admin/seccion-usuarios/seccion
 import { AltaUsuarioComponent } from './pages/admin/alta-usuario/alta-usuario';
 import { adminGuard } from './shared/guards/admin-guard';
 
-// +++ INICIO MODIFICACIÓN +++
 // Importa el nuevo componente y el guardián de autenticación
 import { MisTurnosComponent } from './pages/mis-turnos/mis-turnos';
 import { authGuard } from './shared/guards/auth.guard';
+
+// Importa el nuevo componente de turnos para el admin (con tu nomenclatura)
+import { SeccionTurnosComponent } from './pages/admin/seccion-turnos/seccion-turnos';
+
+// +++ INICIO MODIFICACIÓN (Solicitar Turno) +++
+import { SolicitarTurnoComponent } from './pages/admin/solicitar-turno/solicitar-turno';
+// Importamos el NUEVO guard
+import { pacienteAdminGuard } from './shared/guards/paciente-admin-guard';
 // +++ FIN MODIFICACIÓN +++
 
 export const routes: Routes = [
@@ -18,12 +25,19 @@ export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
 
-  // +++ INICIO MODIFICACIÓN +++
   // Nueva ruta para "Mis Turnos", protegida por authGuard
   {
     path: 'mis-turnos',
     component: MisTurnosComponent,
     canActivate: [authGuard], // Solo usuarios logueados
+  },
+
+  // +++ INICIO MODIFICACIÓN (Solicitar Turno) +++
+  // Nueva ruta para "Solicitar Turno", protegida por pacienteAdminGuard
+  {
+    path: 'solicitar-turno',
+    component: SolicitarTurnoComponent,
+    canActivate: [pacienteAdminGuard], // Solo paciente o admin
   },
   // +++ FIN MODIFICACIÓN +++
 
@@ -38,6 +52,8 @@ export const routes: Routes = [
       { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
       { path: 'usuarios', component: SeccionUsuariosComponent },
       { path: 'usuarios/nuevo', component: AltaUsuarioComponent },
+      // Nueva ruta para que el admin vea TODOS los turnos
+      { path: 'turnos', component: SeccionTurnosComponent },
     ],
   },
 

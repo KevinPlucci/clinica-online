@@ -1,0 +1,268 @@
+// Contenedor principal
+.solicitar-container {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 1rem 2rem 2rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-family: sans-serif;
+}
+
+.solicitar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    margin: 0;
+    color: #1e3a8a;
+    font-size: 1.8rem;
+  }
+}
+
+.solicitar-box {
+  h2 {
+    font-size: 1.3rem;
+    color: #1e3a8a;
+    border-bottom: 1px solid #e0e7ff;
+    padding-bottom: 0.5rem;
+  }
+
+  .paso-container {
+    margin-bottom: 2rem;
+    animation: fadeIn 0.4s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .btn-volver {
+    background: none;
+    border: none;
+    color: #2563eb;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    padding: 0;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// Estilos para los botones de selección
+.selector-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.btn-selector {
+  padding: 0.75rem 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+  font-weight: 500;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #a5b4fc;
+  }
+
+  &.selected {
+    background: #e0e7ff;
+    border-color: #1d4ed8;
+    color: #1e3a8a;
+    font-weight: 600;
+  }
+}
+
+// Grid de Especialidades (botones más grandes)
+.especialidad-grid {
+  .btn-selector {
+    padding: 1rem 1.5rem;
+    font-size: 1.1rem;
+    text-align: center;
+    flex-grow: 1;
+  }
+}
+
+// Grid de Especialistas (tarjetas)
+.especialista-grid {
+  .btn-selector.especialista {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    flex-basis: 300px; // Crece hasta 300px
+    flex-grow: 1;
+
+    img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .especialista-info {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+    .nombre {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .email {
+      font-size: 0.85rem;
+      color: #475569;
+    }
+
+    &.selected {
+      box-shadow: 0 0 0 2px #1d4ed8;
+    }
+  }
+}
+
+// Calendario (Paso 3)
+.calendario-container {
+  display: flex;
+  gap: 2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  min-height: 400px;
+}
+
+.dias-lista {
+  flex: 1;
+  border-right: 1px solid #e2e8f0;
+  padding-right: 2rem;
+
+  h3 { margin-top: 0; }
+  .btn-selector.dia {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.horarios-lista {
+  flex: 2;
+  h3 { margin-top: 0; }
+
+  .horarios-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .btn-selector.horario {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    text-align: center;
+
+    &.ocupado {
+      background: #f1f5f9;
+      color: #94a3b8;
+      text-decoration: line-through;
+      cursor: not-allowed;
+      &:hover {
+        border-color: #cbd5e1;
+      }
+    }
+  }
+}
+
+// Resumen Final
+.resumen-container {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px dashed #e2e8f0;
+
+  p {
+    font-size: 1.1rem;
+    color: #334155;
+    .label {
+      font-weight: 600;
+      color: #1e293b;
+      min-width: 120px;
+      display: inline-block;
+    }
+  }
+
+  .btn-confirmar {
+    font-size: 1.1rem;
+    padding: 0.8rem 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .msg {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  .msg--error { background: #fee2e2; color: #991b1b; }
+}
+
+// Selector de Paciente (Admin)
+.form-field {
+  margin-bottom: 1.5rem;
+  label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 0.5rem;
+  }
+  select {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    background: #fff;
+  }
+}
+
+
+/* --- Estilos de Botones (similares a los de bienvenida) --- */
+.btn,
+.btn-primary,
+.btn-secondary {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.btn-primary {
+  background: #1d4ed8;
+  color: #fff;
+  &:hover { background: #1e3a8a; }
+  &:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+  }
+}
+.btn-secondary {
+  background: #e2e8f0;
+  color: #1e293b;
+  border-color: #cbd5e1;
+  &:hover { background: #cbd5e1; }
+}

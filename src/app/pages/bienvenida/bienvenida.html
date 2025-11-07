@@ -18,8 +18,7 @@
           Ir al panel
         </a>
 
-        <!-- +++ INICIO MODIFICACIÓN +++ -->
-        <!-- Agregamos el botón "Mis Turnos" si es paciente o especialista -->
+        <!-- Botón "Mis Turnos" si es paciente o especialista -->
         <a
           *ngIf="me.rol === 'paciente' || me.rol === 'especialista'"
           class="btn btn-primary"
@@ -27,6 +26,17 @@
           aria-label="Ir a Mis Turnos"
         >
           Mis Turnos
+        </a>
+
+        <!-- +++ INICIO MODIFICACIÓN (Solicitar Turno) +++ -->
+        <!-- Botón "Solicitar Turno" si es paciente -->
+        <a
+          *ngIf="me.rol === 'paciente'"
+          class="btn btn-success"
+          routerLink="/solicitar-turno"
+          aria-label="Solicitar un nuevo Turno"
+        >
+          Solicitar Turno
         </a>
         <!-- +++ FIN MODIFICACIÓN +++ -->
 

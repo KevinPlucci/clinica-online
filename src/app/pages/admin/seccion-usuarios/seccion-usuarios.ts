@@ -1,12 +1,10 @@
-// src/app/pages/admin/seccion-usuarios/seccion-usuarios.ts
-
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService } from '../../../services/usuario.service';
 import { Usuario } from '../../../models/usuario';
 import { SpinnerService } from '../../../services/spinner.service';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router'; // +++ MODIFICADO +++
 import { ToastService } from '../../../shared/toast.service';
 import { ToastsComponent } from '../../../shared/toasts/toasts';
 
@@ -18,7 +16,7 @@ type SortKey = 'nombre' | 'rol' | 'email' | 'dni' | 'estado' | 'verif';
 @Component({
   selector: 'app-seccion-usuarios',
   standalone: true,
-  imports: [CommonModule, FormsModule, ToastsComponent],
+  imports: [CommonModule, FormsModule, ToastsComponent, RouterLink], // +++ MODIFICADO +++
   templateUrl: './seccion-usuarios.html',
   styleUrls: ['./seccion-usuarios.scss'],
 })

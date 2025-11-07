@@ -1,0 +1,93 @@
+<div class="turnos-container" *ngIf="me$ | async as me">
+  <header class="turnos-header">
+    <h1>Turnos de la Clínica</h1>
+    <!-- Botón volver dinámico -->
+    <a [routerLink]="getVolverLink()" class="btn btn-secondary">← Volver a Usuarios</a>
+  </header>
+
+  <!-- Filtro Único -->
+  <div class="filtro-container">
+    <input
+      type="text"
+      class="filtro-input"
+      placeholder="Filtrar por paciente, especialista o especialidad..."
+      [(ngModel)]="filtroInput"
+      (input)="actualizarFiltro()"
+    />
+    <button type="button" class="btn-limpiar" *ngIf="filtroInput" (click)="limpiarFiltro()">
+      &times;
+    </button>
+  </div>
+
+  <!-- Lista de Turnos -->
+  <div
+    class="turnos-lista"
+    *ngIf="
+      turnos$ | async | filtroTurnos : (filtro$ | async) ?? '' : 'admin' as turnos;
+      else loading
+    "
+  >
+    <!-- Vista de Administrador -->
+    <div
+      class="turno-card"
+      *ngFor="let t of turnos; trackBy: trackByTurnoId"
+      [attr.data-estado]="t.estado"
+    >
+      <!-- El admin ve toda la info -->
+      <div class="turno-info">
+        <span class="turno-fecha">{{ t.fecha.toDate() | date : 'dd/MM/yyyy HH:mm' }}</span>
+        <span class="turno-especialidad">{{ t.especialidad }}</span>
+        <span class="turno-actor"><b>Paciente:</b> {{ t.pacienteNombre }}</span>
+        <span class="turno-actor"><b>Dr/a:</b> {{ t.especialistaNombre }}</span>
+      </div>
+
+      <div class="turno-estado">
+        <span class="estado-badge">{{ t.estado | uppercase }}</span>
+      </div>
+      <div class="turno-acciones">
+        <!-- Botón de Admin: Cancelar -->
+        <!-- Solo visible si el turno está 'solicitado' -->
+        <button
+          *ngIf="t.estado === 'solicitado'"
+          class="btn btn-warn"
+          (click)="abrirModal('cancelar', t)"
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay turnos -->
+    <div *ngIf="turnos.length === 0" class="no-turnos">
+      <p>No hay turnos que coincidan con la búsqueda.</p>
+    </div>
+  </div>
+
+  <ng-template #loading>
+    <div class="loading-turnos">Cargando turnos...</div>
+  </ng-template>
+</div>
+
+<!-- Modal Genérico para Comentarios -->
+<div class="modal-overlay" *ngIf="modalVisible" (click)="cerrarModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <button class="modal-close" (click)="cerrarModal()">&times;</button>
+
+    <!-- Título dinámico -->
+    <h3 *ngIf="modalContexto === 'cancelar'">Cancelar Turno</h3>
+
+    <!-- Textarea (solo para input o ver reseña) -->
+    <div class="form-field">
+      <label> Motivo/Comentario: </label>
+      <textarea rows="5" [(ngModel)]="comentarioModal"></textarea>
+
+      <div class="err" *ngIf="errorModal">{{ errorModal }}</div>
+    </div>
+
+    <!-- Botones del Modal -->
+    <div class="modal-actions">
+      <button type="button" class="btn btn-secondary" (click)="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" (click)="confirmarModal()">Confirmar</button>
+    </div>
+  </div>
+</div>

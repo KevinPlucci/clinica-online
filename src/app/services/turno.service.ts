@@ -7,7 +7,8 @@ import {
   collectionData,
   doc,
   updateDoc,
-  CollectionReference, // Importar CollectionReference
+  CollectionReference,
+  addDoc, // +++ IMPORTAR addDoc +++
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { Turno } from '../models/turno';
@@ -18,16 +19,12 @@ import { Turno } from '../models/turno';
 export class TurnoService {
   private firestore = inject(Firestore);
 
-  // +++ INICIO MODIFICACIÓN (Arreglo Injection Context) +++
   // Declaramos la variable aquí
   private turnosCol: CollectionReference;
-  // +++ FIN MODIFICACIÓN +++
 
   constructor() {
-    // +++ INICIO MODIFICACIÓN (Arreglo Injection Context) +++
     // E inicializamos la colección DENTRO del constructor
     this.turnosCol = collection(this.firestore, 'turnos');
-    // +++ FIN MODIFICACIÓN +++
   }
 
   // Obtiene los turnos de un paciente específico
@@ -42,7 +39,23 @@ export class TurnoService {
     return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
   }
 
+  // Obtiene TODOS los turnos para el admin
+  getAllTurnos(): Observable<Turno[]> {
+    const q = query(this.turnosCol); // Sin filtros
+    return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+  }
+
   // --- Acciones ---
+
+  // +++ INICIO MODIFICACIÓN (Crear Turno) +++
+  /**
+   * Crea un nuevo documento de turno en la colección
+   */
+  crearTurno(turno: Omit<Turno, 'id'>): Promise<any> {
+    // addDoc genera un ID automático
+    return addDoc(this.turnosCol, turno);
+  }
+  // +++ FIN MODIFICACIÓN +++
 
   private async updateTurno(id: string, data: Partial<Turno>) {
     const docRef = doc(this.firestore, `turnos/${id}`);
@@ -72,7 +85,7 @@ export class TurnoService {
     return this.updateTurno(id, { encuestaData: data });
   }
 
-  // ACCIÓN DE AMBOS
+  // ACCIÓN DE AMBOS (Y ADMIN)
   cancelarTurno(id: string, motivo: string) {
     return this.updateTurno(id, { estado: 'cancelado', motivoCancelacion: motivo });
   }

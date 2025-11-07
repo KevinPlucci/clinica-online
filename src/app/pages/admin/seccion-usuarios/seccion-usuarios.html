@@ -35,6 +35,14 @@
     <div class="actions">
       <button class="btn-outline" (click)="volverABienvenida()">← Volver a Bienvenida</button>
 
+      <!-- Botón para navegar a la nueva sección de turnos -->
+      <a class="btn-outline" routerLink="/admin/turnos">Ver Turnos</a>
+
+      <!-- +++ INICIO MODIFICACIÓN (Solicitar Turno) +++ -->
+      <!-- Botón para que el Admin solicite un turno -->
+      <a class="btn btn-success" routerLink="/solicitar-turno"> + Solicitar Turno </a>
+      <!-- +++ FIN MODIFICACIÓN +++ -->
+
       <button class="btn-outline" (click)="exportCsv()">Exportar CSV</button>
       <button class="btn" (click)="crearNuevoUsuario()">+ Nuevo usuario</button>
     </div>
@@ -123,7 +131,7 @@
       <div class="cell avatar">
         <img
           [src]="u.fotoURL || u.fotoURL1 || u.fotoURL2 || 'assets/avatar-placeholder.png'"
-          alt="Avatar de {{ u.displayName || u.email }}"
+          alt="Avatar de {{ u.nombre }} {{ u.apellido }}"
           width="40"
           height="40"
         />
