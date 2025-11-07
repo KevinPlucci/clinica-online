@@ -1,5 +1,3 @@
-// src/app/app.routes.ts
-
 import { Routes } from '@angular/router';
 import { BienvenidaComponent } from './pages/bienvenida/bienvenida';
 import { LoginComponent } from './pages/login/login';
@@ -8,11 +6,26 @@ import { SeccionUsuariosComponent } from './pages/admin/seccion-usuarios/seccion
 import { AltaUsuarioComponent } from './pages/admin/alta-usuario/alta-usuario';
 import { adminGuard } from './shared/guards/admin-guard';
 
+// +++ INICIO MODIFICACIÓN +++
+// Importa el nuevo componente y el guardián de autenticación
+import { MisTurnosComponent } from './pages/mis-turnos/mis-turnos';
+import { authGuard } from './shared/guards/auth.guard';
+// +++ FIN MODIFICACIÓN +++
+
 export const routes: Routes = [
   { path: '', redirectTo: '/bienvenida', pathMatch: 'full' },
   { path: 'bienvenida', component: BienvenidaComponent },
   { path: 'login', component: LoginComponent },
   { path: 'registro', component: RegistroComponent },
+
+  // +++ INICIO MODIFICACIÓN +++
+  // Nueva ruta para "Mis Turnos", protegida por authGuard
+  {
+    path: 'mis-turnos',
+    component: MisTurnosComponent,
+    canActivate: [authGuard], // Solo usuarios logueados
+  },
+  // +++ FIN MODIFICACIÓN +++
 
   // Alias de compatibilidad
   { path: 'usuarios', redirectTo: '/admin/usuarios', pathMatch: 'full' },

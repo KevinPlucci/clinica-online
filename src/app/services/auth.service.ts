@@ -40,9 +40,19 @@ export class AuthService {
     this.authUser$ = user(this.auth);
     this.uid$ = this.authUser$.pipe(map((u) => (u ? u.uid : null)));
     this.email$ = this.authUser$.pipe(map((u) => (u ? u.email : null)));
+
+    // +++ INICIO MODIFICACIÓN 1 (Arreglo Injection Context) +++
+    // Usamos runInInjectionContext para evitar errores de Firebase
+    // fuera del contexto de Angular.
     this.me$ = this.uid$.pipe(
-      switchMap((uid) => (uid ? this.usuarioService.getUsuario(uid) : of(null)))
+      switchMap((uid) => {
+        if (!uid) return of(null);
+        // Usamos this.env (inyectado en la clase)
+        return runInInjectionContext(this.env, () => this.usuarioService.getUsuario(uid));
+      })
     );
+    // +++ FIN MODIFICACIÓN 1 +++
+
     this.isAdmin$ = this.me$.pipe(
       switchMap((me) => {
         if (!me) return of(false);
@@ -120,13 +130,31 @@ export class AuthService {
         }
         const rol = (data?.rol || 'user') as Usuario['rol'];
         const habilitado = data?.habilitado !== false;
+
+        // +++ INICIO MODIFICACIÓN 2 (Salteo de Verificación) +++
+        // Lista de correos demo que pueden saltear la verificación
+        const demoEmails = [
+          'admin@demo.com',
+          'especialista@demo.com',
+          'especialista2@demo.com',
+          'paciente@demo.com',
+          'paciente2@demo.com',
+          'paciente3@demo.com',
+        ];
+        // Usamos el 'email' que entró a la función
+        const isDemoUser = demoEmails.includes(email);
+        // +++ FIN MODIFICACIÓN 2 +++
+
         const requiereVerificacion = rol === 'paciente' || rol === 'especialista';
-        if (requiereVerificacion && !user.emailVerified) {
+
+        // +++ MODIFICADO: Agregamos '!isDemoUser' a la condición
+        if (requiereVerificacion && !user.emailVerified && !isDemoUser) {
           await signOut(this.auth);
           const err: any = new Error('Email no verificado');
           err.code = 'auth/email-not-verified';
           throw err;
         }
+
         if (rol === 'especialista' && !habilitado) {
           await signOut(this.auth);
           const err: any = new Error('Cuenta de especialista no aprobada');

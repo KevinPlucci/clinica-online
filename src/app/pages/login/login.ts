@@ -4,7 +4,6 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
-// +++ INICIO CAMBIOS (FAB) +++
 // Interface para los usuarios de acceso rápido
 interface QuickAccessUser {
   nombre: string;
@@ -13,7 +12,6 @@ interface QuickAccessUser {
   password: string;
   img: string;
 }
-// +++ FIN CAMBIOS (FAB) +++
 
 @Component({
   selector: 'app-login',
@@ -45,7 +43,6 @@ export class LoginComponent implements OnDestroy {
   showPassword = false;
   isSubmitting = false;
 
-  // +++ INICIO CAMBIOS (FAB) +++
   /**
    * Controla si el menú FAB (Floating Action Button) está abierto.
    */
@@ -106,7 +103,6 @@ export class LoginComponent implements OnDestroy {
   toggleFab() {
     this.isFabOpen = !this.isFabOpen;
   }
-  // +++ FIN CAMBIOS (FAB) +++
 
   ngOnDestroy(): void {
     if (this.cooldownTimer) clearInterval(this.cooldownTimer);
@@ -129,6 +125,8 @@ export class LoginComponent implements OnDestroy {
       const isAdmin = await this.auth.isAdminOnce();
       await this.router.navigate([isAdmin ? '/admin/usuarios' : '/bienvenida']);
     } catch (error: any) {
+      // +++ INICIO MODIFICACIÓN (Error de Login) +++
+      // Se actualizan los códigos de error a los nuevos de Firebase v9+
       switch (error?.code) {
         case 'auth/email-not-verified':
           this.errorMessage = 'Debés verificar tu correo antes de ingresar.';
@@ -144,18 +142,19 @@ export class LoginComponent implements OnDestroy {
           break;
         case 'auth/user-not-found':
         case 'auth/wrong-password':
+        case 'auth/invalid-credential': // <-- Este es el nuevo código
           this.errorMessage = 'El correo electrónico o la contraseña son incorrectos.';
           break;
         default:
           this.errorMessage = 'Ocurrió un error inesperado. Por favor, intentá de nuevo.';
       }
+      // +++ FIN MODIFICACIÓN (Error de Login) +++
     } finally {
       this.isSubmitting = false;
     }
   }
 
   // Accesos rápidos
-  // --- MODIFICADO (FAB) ---
   // Ahora recibe el objeto de usuario completo y cierra el FAB.
   accesoRapido(user: QuickAccessUser) {
     this.loginForm.patchValue({
@@ -165,7 +164,6 @@ export class LoginComponent implements OnDestroy {
     });
     this.isFabOpen = false;
   }
-  // --- FIN MODIFICADO (FAB) ---
 
   // Reenviar verificación con cooldown
   async reenviarVerificacion() {
