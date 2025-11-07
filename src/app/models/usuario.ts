@@ -20,11 +20,21 @@ export interface Usuario {
   obraSocial?: string; // Paciente
   especialidades?: string[]; // Especialista
   habilitado?: boolean; // Especialista
-  fotoURL?: string; // Especialista
-  fotoURL1?: string; // Paciente
-  fotoURL2?: string; // Paciente
+
+  // +++ INICIO MODIFICACIÓN (Arreglo Error TS) +++
+  // Permitimos que las URLs sean 'null'
+  fotoURL?: string | null; // Especialista
+  fotoURL1?: string | null; // Paciente
+  fotoURL2?: string | null; // Paciente
+  // +++ FIN MODIFICACIÓN +++
+
   displayName?: string; // Legacy o de Auth
   createdAt: any; // Timestamp
+
+  // +++ INICIO MODIFICACIÓN (Arreglo Error TS) +++
+  // Agregamos el campo que faltaba y que usa admin-user-service.ts
+  updatedAt?: any; // Timestamp
+  // +++ FIN MODIFICACIÓN +++
 
   // +++ CAMPO NUEVO PARA HORARIOS +++
   disponibilidad?: {

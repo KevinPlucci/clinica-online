@@ -63,6 +63,8 @@ export class AdminUserService {
     await sendEmailVerification(user);
 
     // 2) Base persistida (emailVerified:false)
+    // +++ INICIO MODIFICACIÓN (Arreglo Error TS) +++
+    // Completamos el objeto 'base' para que cumpla con la interface 'Usuario'
     const base: Usuario = {
       uid,
       email: input.email,
@@ -73,12 +75,15 @@ export class AdminUserService {
       apellido: input.apellido,
       edad: input.edad,
       dni: input.dni,
-      fotoURL: null,
-      fotoURL1: null,
-      fotoURL2: null,
-      createdAt: null as any,
-      updatedAt: null as any,
+      fotoURL: null, // Esto ahora es válido gracias al cambio en usuario.ts
+      fotoURL1: null, // Esto ahora es válido
+      fotoURL2: null, // Esto ahora es válido
+      createdAt: null as any, // Asumimos que se setea en el servicio
+      updatedAt: null as any, // Esto ahora es válido
+      emailVerified: false, // Añadimos el campo que faltaba
+      disponibilidad: {}, // Añadimos el campo que faltaba
     };
+    // +++ FIN MODIFICACIÓN +++
 
     // 3) Imágenes + persistencia final
     // FIX: Envolvemos las llamadas a servicios que usan Firebase (storage y usuario)
