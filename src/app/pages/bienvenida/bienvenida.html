@@ -18,6 +18,13 @@
           Ir al panel
         </a>
 
+        <!-- +++ INICIO MODIFICACIÓN (Mi Perfil) +++ -->
+        <!-- Botón "Mi Perfil" (Todos los logueados) -->
+        <a class="btn btn-primary" routerLink="/mi-perfil" aria-label="Ir a Mi Perfil">
+          Mi Perfil
+        </a>
+        <!-- +++ FIN MODIFICACIÓN +++ -->
+
         <!-- Botón "Mis Turnos" si es paciente o especialista -->
         <a
           *ngIf="me.rol === 'paciente' || me.rol === 'especialista'"
@@ -28,7 +35,6 @@
           Mis Turnos
         </a>
 
-        <!-- +++ INICIO MODIFICACIÓN (Solicitar Turno) +++ -->
         <!-- Botón "Solicitar Turno" si es paciente -->
         <a
           *ngIf="me.rol === 'paciente'"
@@ -38,7 +44,6 @@
         >
           Solicitar Turno
         </a>
-        <!-- +++ FIN MODIFICACIÓN +++ -->
 
         <button type="button" class="btn btn-secondary" (click)="logout()">Cerrar sesión</button>
       </div>

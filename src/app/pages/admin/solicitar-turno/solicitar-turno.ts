@@ -8,13 +8,13 @@ import {
   runInInjectionContext,
 } from '@angular/core';
 import { CommonModule, DatePipe, TitleCasePipe } from '@angular/common';
-import { Router } from '@angular/router'; // Se quitó RouterLink
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Observable, combineLatest, map, of, startWith, switchMap, firstValueFrom } from 'rxjs';
 import { Timestamp } from '@angular/fire/firestore';
 
 // Modelos y Servicios
-import { Usuario } from '../../../models/usuario';
+import { Usuario, HorarioConfig } from '../../../models/usuario'; // +++ Importar HorarioConfig +++
 import { Turno } from '../../../models/turno';
 import { AuthService } from '../../../services/auth.service';
 import { UsuarioService } from '../../../services/usuario.service';
@@ -29,7 +29,7 @@ interface HorarioSlot {
 @Component({
   selector: 'app-solicitar-turno',
   standalone: true,
-  imports: [CommonModule, /* RouterLink */ FormsModule, DatePipe, TitleCasePipe], // Se quitó RouterLink
+  imports: [CommonModule, FormsModule, DatePipe, TitleCasePipe],
   templateUrl: './solicitar-turno.html',
   styleUrls: ['./solicitar-turno.scss'],
 })
@@ -68,10 +68,7 @@ export class SolicitarTurnoComponent {
 
   // Turnos existentes del especialista (para verificar disponibilidad)
   private turnosEspecialista$!: Observable<Turno[]>;
-  // +++ INICIO MODIFICACIÓN (Arreglo Error TS) +++
-  // El Set debe guardar 'number' (de .getTime())
   private turnosOcupados = signal<Set<number>>(new Set());
-  // +++ FIN MODIFICACIÓN +++
 
   constructor() {
     this.cargarDatosIniciales();
@@ -123,8 +120,10 @@ export class SolicitarTurnoComponent {
           return;
         }
 
-        // Generar los próximos 15 días (excluyendo domingos)
-        this.diasDisponibles.set(this.generarProximos15Dias());
+        // +++ INICIO MODIFICACIÓN (Horarios Dinámicos) +++
+        // Generar los próximos 15 días basándose en la DISPONIBILIDAD
+        this.diasDisponibles.set(this.generarProximos15Dias(esp));
+        // +++ FIN MODIFICACIÓN +++
 
         // Cargar los turnos existentes de este especialista
         this.cargando.set(true);
@@ -217,18 +216,33 @@ export class SolicitarTurnoComponent {
   // --- Lógica de Generación de Fechas/Horas ---
 
   /**
-   * Genera los próximos 15 días hábiles (Lunes a Sábado).
+   * Genera los próximos 15 días en los que el especialista TRABAJA.
    */
-  private generarProximos15Dias(): Date[] {
+  private generarProximos15Dias(especialista: Usuario | null): Date[] {
+    if (!especialista || !especialista.disponibilidad || !this.especialidadSel()) {
+      return [];
+    }
+
+    // Buscamos los horarios para la especialidad seleccionada
+    const horariosEspecialidad = especialista.disponibilidad[this.especialidadSel()!];
+    if (!horariosEspecialidad || horariosEspecialidad.length === 0) {
+      return []; // Este especialista no cargó horarios para esta especialidad
+    }
+
+    // Creamos un Set con los días de la semana que trabaja (1=Lunes, 6=Sábado)
+    const diasQueTrabaja = new Set(horariosEspecialidad.map((h) => h.dia));
+
     const dias: Date[] = [];
     let hoy = new Date();
     // Empezamos desde mañana
     hoy.setDate(hoy.getDate() + 1);
 
-    while (dias.length < 15) {
-      const diaSemana = hoy.getDay();
-      // 0 = Domingo. Excluimos domingos.
-      if (diaSemana !== 0) {
+    // Iteramos los próximos 30 días para encontrar 15 días hábiles
+    for (let i = 0; i < 30 && dias.length < 15; i++) {
+      const diaSemana = hoy.getDay(); // 0 = Domingo
+
+      // Si el día de la semana (ej: 1=Lunes) está en el Set de días que trabaja
+      if (diasQueTrabaja.has(diaSemana)) {
         dias.push(new Date(hoy));
       }
       hoy.setDate(hoy.getDate() + 1);
@@ -237,55 +251,51 @@ export class SolicitarTurnoComponent {
   }
 
   /**
-   * Genera los slots de horarios (L-V 8 a 19, Sáb 8 a 14)
-   * y los marca como 'ocupado' si ya existen.
+   * Genera los slots de horarios basándose en la disponibilidad
+   * guardada por el especialista.
    */
   private generarHorariosParaDia(dia: Date): HorarioSlot[] {
+    const especialista = this.especialistaSel();
+    const especialidad = this.especialidadSel();
+    if (!especialista || !especialidad || !especialista.disponibilidad) {
+      return [];
+    }
+
     const horarios: HorarioSlot[] = [];
     const diaSemana = dia.getDay(); // 0=Dom, 6=Sáb
     const ocupados = this.turnosOcupados();
 
-    // Horarios para Lunes a Viernes (8:00 a 19:00)
-    if (diaSemana >= 1 && diaSemana <= 5) {
-      for (let hora = 8; hora < 19; hora++) {
-        // Slot :00
-        let fecha1 = new Date(dia);
-        fecha1.setHours(hora, 0, 0, 0);
-        horarios.push({
-          fecha: fecha1,
-          ocupado: ocupados.has(fecha1.getTime()), // <-- Arreglado (Set<number>.has(number))
-        });
+    // 1. Obtener las reglas para esta especialidad
+    const reglasEspecialidad = especialista.disponibilidad[especialidad] || [];
 
-        // Slot :30
-        let fecha2 = new Date(dia);
-        fecha2.setHours(hora, 30, 0, 0);
-        horarios.push({
-          fecha: fecha2,
-          ocupado: ocupados.has(fecha2.getTime()), // <-- Arreglado (Set<number>.has(number))
-        });
-      }
+    // 2. Filtrar las reglas para el día seleccionado (ej: todas las reglas para el Lunes)
+    const reglasDelDia = reglasEspecialidad.filter((r) => r.dia === diaSemana);
+    if (reglasDelDia.length === 0) {
+      return []; // No trabaja este día en esta especialidad
     }
-    // Horarios para Sábado (8:00 a 14:00)
-    else if (diaSemana === 6) {
-      for (let hora = 8; hora < 14; hora++) {
-        // Slot :00
-        let fecha1 = new Date(dia);
-        fecha1.setHours(hora, 0, 0, 0);
-        horarios.push({
-          fecha: fecha1,
-          ocupado: ocupados.has(fecha1.getTime()), // <-- Arreglado (Set<number>.has(number))
-        });
 
-        // Slot :30
-        let fecha2 = new Date(dia);
-        fecha2.setHours(hora, 30, 0, 0);
+    // 3. Iterar por cada regla (ej: turno mañana y turno tarde)
+    reglasDelDia.forEach((regla) => {
+      const [startHour, startMin] = regla.desde.split(':').map(Number);
+      const [endHour, endMin] = regla.hasta.split(':').map(Number);
+
+      let slotDate = new Date(dia);
+      slotDate.setHours(startHour, startMin, 0, 0);
+
+      let endDate = new Date(dia);
+      endDate.setHours(endHour, endMin, 0, 0);
+
+      // 4. Generar slots cada 30 minutos dentro del rango
+      while (slotDate < endDate) {
+        const fechaSlot = new Date(slotDate);
         horarios.push({
-          fecha: fecha2,
-          ocupado: ocupados.has(fecha2.getTime()), // <-- Arreglado (Set<number>.has(number))
+          fecha: fechaSlot,
+          ocupado: ocupados.has(fechaSlot.getTime()),
         });
+        // Incrementar 30 minutos
+        slotDate.setMinutes(slotDate.getMinutes() + 30);
       }
-    }
-    // Domingo no debería llegar aquí, pero por si acaso
+    });
 
     return horarios;
   }
@@ -316,12 +326,8 @@ export class SolicitarTurnoComponent {
       // Si es admin, necesitamos buscar el nombre del paciente
       let pacienteNombre = 'Paciente';
       if (this.isAdmin()) {
-        // Usamos firstValueFrom para convertir el Observable en Promesa
         const pacientes = await firstValueFrom(this.pacientes$);
-        // +++ INICIO MODIFICACIÓN (Arreglo Error TS) +++
-        // Tipamos 'p' como 'Usuario'
         const p = pacientes?.find((p: Usuario) => p.uid === pacienteId);
-        // +++ FIN MODIFICACIÓN +++
         pacienteNombre = p ? `${p.nombre} ${p.apellido}` : 'Paciente';
       } else {
         const me = await firstValueFrom(this.me$);
@@ -369,10 +375,7 @@ export class SolicitarTurnoComponent {
   // Funciones para obtener nombres y evitar lógica compleja en HTML
   getPacienteNombre(pacientes: Usuario[] | null, uid: string | null): string {
     if (!pacientes || !uid) return '...';
-    // +++ INICIO MODIFICACIÓN (Arreglo Error TS) +++
-    // Tipamos 'p' como 'Usuario'
     const p = pacientes.find((p: Usuario) => p.uid === uid);
-    // +++ FIN MODIFICACIÓN +++
     return p ? `${p.nombre} ${p.apellido}` : 'Paciente no encontrado';
   }
 

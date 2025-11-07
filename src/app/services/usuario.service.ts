@@ -1,4 +1,3 @@
-// src/app/services/usuario.service.ts
 import { Injectable, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import {
   Firestore,
@@ -10,7 +9,7 @@ import {
   setDoc,
   getDoc,
 } from '@angular/fire/firestore';
-import { Usuario, Rol } from '../models/usuario';
+import { Usuario, Rol, HorarioConfig } from '../models/usuario'; // +++ Importar HorarioConfig +++
 import { map, Observable, defer } from 'rxjs';
 import { AuditService } from './audit.service';
 
@@ -75,4 +74,24 @@ export class UsuarioService {
       after: { habilitado },
     });
   }
+
+  // +++ INICIO MODIFICACIÓN (Guardar Horarios) +++
+  /**
+   * Guarda el objeto de disponibilidad horaria para un especialista.
+   * Convierte el Map del formulario en un Objeto plano para Firestore.
+   */
+  async guardarHorariosDisponibles(uid: string, horariosMap: Map<string, HorarioConfig[]>) {
+    // Convertir el Map a un objeto plano
+    const disponibilidadObj: { [key: string]: HorarioConfig[] } = {};
+    horariosMap.forEach((value, key) => {
+      disponibilidadObj[key] = value;
+    });
+
+    const ref = doc(this.firestore, 'usuarios', uid);
+    // Usamos runInInjectionContext para la llamada a Firestore
+    await runInInjectionContext(this.env, () =>
+      updateDoc(ref, { disponibilidad: disponibilidadObj })
+    );
+  }
+  // +++ FIN MODIFICACIÓN +++
 }

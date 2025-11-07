@@ -1,31 +1,36 @@
-export type Rol = 'admin' | 'paciente' | 'especialista' | 'user';
+import { Timestamp } from '@angular/fire/firestore'; // Asegúrate de tener esta importación si usas serverTimestamp
+
+// Este es el modelo de Horario que usaremos
+export interface HorarioConfig {
+  dia: number; // 0 (Domingo) a 6 (Sábado)
+  desde: string; // "09:00"
+  hasta: string; // "17:00"
+}
+
+export type Rol = 'paciente' | 'especialista' | 'admin' | 'user';
 
 export interface Usuario {
   uid: string;
   email: string;
-  displayName?: string;
-
   rol: Rol;
-  habilitado?: boolean;
-
   nombre?: string;
   apellido?: string;
   edad?: number;
-  dni?: string | number;
+  dni?: string;
+  obraSocial?: string; // Paciente
+  especialidades?: string[]; // Especialista
+  habilitado?: boolean; // Especialista
+  fotoURL?: string; // Especialista
+  fotoURL1?: string; // Paciente
+  fotoURL2?: string; // Paciente
+  displayName?: string; // Legacy o de Auth
+  createdAt: any; // Timestamp
 
-  obraSocial?: string;
-  especialidades?: string[];
+  // +++ CAMPO NUEVO PARA HORARIOS +++
+  disponibilidad?: {
+    [especialidad: string]: HorarioConfig[];
+  };
 
-  // Fotos
-  fotoURL?: string | null;
-  fotoURL1?: string | null;
-  fotoURL2?: string | null;
-
-  // Seguimiento
-  emailVerified?: boolean; // <- agregado para la grilla
-  emailVerifiedAt?: any;
-  lastLoginAt?: any;
-
-  createdAt?: any;
-  updatedAt?: any;
+  // +++ CAMPO QUE FALTABA (PARA ARREGLAR ERRORES) +++
+  emailVerified?: boolean;
 }

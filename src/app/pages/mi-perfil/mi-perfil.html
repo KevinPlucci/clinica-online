@@ -1,0 +1,125 @@
+<div class="perfil-container" *ngIf="me() as user; else loading">
+  <header class="perfil-header">
+    <h1>Mi Perfil</h1>
+    <a routerLink="/bienvenida" class="btn btn-secondary">← Volver</a>
+  </header>
+
+  <div class="perfil-card">
+    <!-- Sección de Datos Personales -->
+    <div class="perfil-info">
+      <div class="perfil-avatar">
+        <!-- Muestra la primera foto que encuentre -->
+        <img
+          [src]="user.fotoURL || user.fotoURL1 || user.fotoURL2 || 'assets/avatar-placeholder.png'"
+          alt="Foto de perfil de {{ user.nombre }}"
+        />
+      </div>
+      <div class="perfil-datos">
+        <h2>{{ user.nombre }} {{ user.apellido }}</h2>
+        <p class="rol">{{ user.rol | titlecase }}</p>
+        <p class="dato"><span class="label">Email:</span> {{ user.email }}</p>
+        <p class="dato" *ngIf="user.dni"><span class="label">DNI:</span> {{ user.dni }}</p>
+        <p class="dato" *ngIf="user.edad"><span class="label">Edad:</span> {{ user.edad }} años</p>
+        <p class="dato" *ngIf="user.obraSocial">
+          <span class="label">Obra Social:</span> {{ user.obraSocial }}
+        </p>
+        <div class="dato" *ngIf="user.rol === 'especialista'">
+          <span class="label">Especialidades:</span>
+          <div class="chip-container">
+            <span class="chip" *ngFor="let esp of user.especialidades">{{ esp }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sección de Fotos (Paciente) -->
+    <div class="perfil-fotos" *ngIf="user.rol === 'paciente' && (user.fotoURL1 || user.fotoURL2)">
+      <h3>Mis Fotos</h3>
+      <div class="fotos-grid">
+        <img *ngIf="user.fotoURL1" [src]="user.fotoURL1" alt="Foto de perfil 1" />
+        <img *ngIf="user.fotoURL2" [src]="user.fotoURL2" alt="Foto de perfil 2" />
+      </div>
+    </div>
+
+    <!-- Sección de Horarios (SOLO ESPECIALISTA) -->
+    <div class="perfil-horarios" *ngIf="user.rol === 'especialista'">
+      <header class="horarios-header">
+        <h3>Mis Horarios de Atención</h3>
+        <button *ngIf="!editando()" class="btn btn-primary" (click)="editando.set(true)">
+          Editar Horarios
+        </button>
+      </header>
+
+      <div class="mensaje-guardado" *ngIf="mensaje()">{{ mensaje() }}</div>
+
+      <!-- Iteramos sobre el Map (convertido a array para el template) -->
+      <div *ngFor="let esp of user.especialidades">
+        <div class="horario-especialidad-group">
+          <h4>Especialidad: {{ esp }}</h4>
+
+          <!-- Vista de "Solo Lectura" -->
+          <div class="vista-horarios" *ngIf="!editando()">
+            <ul *ngIf="getHorariosArray(esp).length > 0; else noHorarios">
+              <li *ngFor="let h of getHorariosArray(esp)">
+                {{ diasSemana[h.dia - 1].nombre }} de {{ h.desde }} a {{ h.hasta }} hs
+              </li>
+            </ul>
+            <ng-template #noHorarios>
+              <p class="no-horarios-msg">No hay horarios definidos para esta especialidad.</p>
+            </ng-template>
+          </div>
+
+          <!-- Vista de "Edición" -->
+          <div class="editor-horarios" *ngIf="editando()">
+            <div class="horario-row" *ngFor="let h of getHorariosArray(esp); let i = index">
+              <select class="form-input" [(ngModel)]="h.dia" title="Día de la semana">
+                <option *ngFor="let dia of diasSemana" [value]="dia.id">
+                  {{ dia.nombre }}
+                </option>
+              </select>
+              <label>Desde:</label>
+              <input
+                class="form-input"
+                type="time"
+                [(ngModel)]="h.desde"
+                title="Hora de inicio"
+                step="1800"
+              />
+              <label>Hasta:</label>
+              <input
+                class="form-input"
+                type="time"
+                [(ngModel)]="h.hasta"
+                title="Hora de fin"
+                step="1800"
+              />
+              <button class="btn-remove" (click)="removeHorario(esp, i)" title="Quitar horario">
+                &times;
+              </button>
+            </div>
+
+            <button class="btn btn-outline btn-add" (click)="addHorario(esp)">
+              + Agregar horario para {{ esp }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones de Guardar/Cancelar (Edición) -->
+      <div class="editor-actions" *ngIf="editando()">
+        <button class="btn btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
+        <button class="btn btn-success" (click)="guardarHorarios()" [disabled]="cargando()">
+          {{ cargando() ? 'Guardando...' : 'Guardar Horarios' }}
+        </button>
+      </div>
+    </div>
+    <!-- fin .perfil-horarios -->
+  </div>
+  <!-- fin .perfil-card -->
+</div>
+
+<ng-template #loading>
+  <div class="perfil-container">
+    <p>Cargando perfil...</p>
+  </div>
+</ng-template>

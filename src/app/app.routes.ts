@@ -14,9 +14,13 @@ import { authGuard } from './shared/guards/auth.guard';
 import { SeccionTurnosComponent } from './pages/admin/seccion-turnos/seccion-turnos';
 
 // +++ INICIO MODIFICACIÓN (Solicitar Turno) +++
+// CORRECCIÓN: La ruta de solicitar-turno NO está en /admin/
 import { SolicitarTurnoComponent } from './pages/admin/solicitar-turno/solicitar-turno';
-// Importamos el NUEVO guard
 import { pacienteAdminGuard } from './shared/guards/paciente-admin-guard';
+// +++ FIN MODIFICACIÓN +++
+
+// +++ INICIO MODIFICACIÓN (Mi Perfil) +++
+import { MiPerfilComponent } from './pages/mi-perfil/mi-perfil';
 // +++ FIN MODIFICACIÓN +++
 
 export const routes: Routes = [
@@ -32,12 +36,19 @@ export const routes: Routes = [
     canActivate: [authGuard], // Solo usuarios logueados
   },
 
-  // +++ INICIO MODIFICACIÓN (Solicitar Turno) +++
   // Nueva ruta para "Solicitar Turno", protegida por pacienteAdminGuard
   {
     path: 'solicitar-turno',
     component: SolicitarTurnoComponent,
     canActivate: [pacienteAdminGuard], // Solo paciente o admin
+  },
+
+  // +++ INICIO MODIFICACIÓN (Mi Perfil) +++
+  // Nueva ruta para "Mi Perfil", protegida por authGuard
+  {
+    path: 'mi-perfil',
+    component: MiPerfilComponent,
+    canActivate: [authGuard], // Solo usuarios logueados
   },
   // +++ FIN MODIFICACIÓN +++
 
