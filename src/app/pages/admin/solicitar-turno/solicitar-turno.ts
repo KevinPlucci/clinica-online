@@ -7,10 +7,10 @@ import {
   EnvironmentInjector,
   runInInjectionContext,
 } from '@angular/core';
-import { CommonModule, DatePipe, TitleCasePipe } from '@angular/common';
+import { CommonModule, DatePipe, TitleCasePipe, UpperCasePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Observable, combineLatest, map, of, startWith, switchMap, firstValueFrom } from 'rxjs';
+import { Observable, combineLatest, map, of, startWith, firstValueFrom } from 'rxjs';
 import { Timestamp } from '@angular/fire/firestore';
 
 // Modelos y Servicios
@@ -29,7 +29,7 @@ interface HorarioSlot {
 @Component({
   selector: 'app-solicitar-turno',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, TitleCasePipe],
+  imports: [CommonModule, FormsModule, DatePipe, TitleCasePipe, UpperCasePipe],
   templateUrl: './solicitar-turno.html',
   styleUrls: ['./solicitar-turno.scss'],
 })
@@ -44,34 +44,43 @@ export class SolicitarTurnoComponent {
   me$: Observable<Usuario | null> = this.auth.me$;
   isAdmin = signal<boolean>(false);
 
-  // Listas de usuarios (para admin y para selección)
+  // Listas
   especialistas$!: Observable<Usuario[]>;
   pacientes$!: Observable<Usuario[]>;
-  especialidades$!: Observable<string[]>;
+  // Ya no necesitamos la lista global de especialidades al inicio
 
   // --- Estado del Asistente ---
-  paso = signal<1 | 2 | 3>(1);
+  paso = signal<1 | 2 | 3 | 4>(1); // 1: Profesional, 2: Especialidad, 3: Día, 4: Horario
   cargando = signal<boolean>(true);
   error = signal<string | null>(null);
 
   // --- Selecciones del Turno ---
-  especialidadSel = signal<string | null>(null);
+  pacienteSelId = signal<string | null>(null); // Solo para el Admin
   especialistaSel = signal<Usuario | null>(null);
-  pacienteSelId = signal<string | null>(null);
+  especialidadSel = signal<string | null>(null);
   diaSel = signal<Date | null>(null);
   horarioSel = signal<HorarioSlot | null>(null);
 
-  // --- Listas Filtradas ---
-  especialistasFiltrados = signal<Usuario[]>([]);
+  // --- Listas Filtradas para el Template ---
+  especialidadesDelProfesional = signal<string[]>([]);
   diasDisponibles = signal<Date[]>([]);
   horariosDisponibles = signal<HorarioSlot[]>([]);
 
   private turnosOcupados = signal<Set<number>>(new Set());
 
+  // Imágenes por defecto para especialidades (puedes agregar más)
+  imagenesEspecialidad: { [key: string]: string } = {
+    Traumatología: 'assets/especialidades/traumatologia.png',
+    Cardiología: 'assets/especialidades/cardiologia.png',
+    Pediatría: 'assets/especialidades/pediatria.png',
+    // ... otras
+    default: 'assets/especialidades/default.png',
+  };
+
   constructor() {
     this.cargarDatosIniciales();
 
-    // 1. Detectar Admin
+    // 1. Detectar Admin y auto-seleccionar paciente si no lo es
     effect(() => {
       runInInjectionContext(this.env, () => {
         this.me$.subscribe((user) => {
@@ -86,51 +95,46 @@ export class SolicitarTurnoComponent {
       });
     });
 
-    // 2. Filtrar especialistas por especialidad
-    effect(() => {
-      runInInjectionContext(this.env, () => {
-        const esp = this.especialidadSel();
-        if (!esp) {
-          this.especialistasFiltrados.set([]);
-          return;
-        }
-        this.cargando.set(true);
-        this.especialistas$.subscribe((todos) => {
-          const filtrados = todos.filter(
-            (e) => (e.especialidades as string[])?.includes(esp) && e.habilitado
-          );
-          this.especialistasFiltrados.set(filtrados);
-          this.cargando.set(false);
-        });
-      });
-    });
-
-    // 3. Cargar disponibilidad y turnos ocupados del especialista
+    // 2. Cuando cambia el especialista, cargar sus especialidades y sus turnos
     effect(() => {
       runInInjectionContext(this.env, () => {
         const esp = this.especialistaSel();
         if (!esp) {
-          this.diasDisponibles.set([]);
+          this.especialidadesDelProfesional.set([]);
           this.turnosOcupados.set(new Set());
           return;
         }
 
-        this.diasDisponibles.set(this.generarProximos15Dias(esp));
+        // Cargar especialidades del profesional elegido
+        this.especialidadesDelProfesional.set(esp.especialidades || []);
 
+        // Cargar sus turnos ocupados (para usarlos más adelante)
         this.cargando.set(true);
         this.turnoService.getTurnosParaEspecialista(esp.uid).subscribe((turnos) => {
-          // Filtramos solo los que NO están cancelados o rechazados para que ocupen lugar
           const turnosActivos = turnos.filter(
             (t) => t.estado !== 'cancelado' && t.estado !== 'rechazado'
           );
           const ocupados = new Set(turnosActivos.map((t) => t.fecha.toDate().getTime()));
           this.turnosOcupados.set(ocupados);
           this.cargando.set(false);
+
+          // Si ya estábamos en el paso de horarios, regenerarlos
           if (this.diaSel()) {
             this.seleccionarDia(this.diaSel()!);
           }
         });
       });
+    });
+
+    // 3. Cuando cambia la especialidad, generar los días disponibles
+    effect(() => {
+      const esp = this.especialistaSel();
+      const especialidad = this.especialidadSel();
+      if (!esp || !especialidad) {
+        this.diasDisponibles.set([]);
+        return;
+      }
+      this.diasDisponibles.set(this.generarProximos15Dias(esp, especialidad));
     });
   }
 
@@ -139,75 +143,67 @@ export class SolicitarTurnoComponent {
     const todosUsuarios$ = runInInjectionContext(this.env, () => this.usuarioService.usuarios$());
 
     this.especialistas$ = todosUsuarios$.pipe(
-      map((usuarios) => usuarios.filter((u) => u.rol === 'especialista'))
+      map((usuarios) => usuarios.filter((u) => u.rol === 'especialista' && u.habilitado))
     );
 
     this.pacientes$ = todosUsuarios$.pipe(
       map((usuarios) => usuarios.filter((u) => u.rol === 'paciente'))
     );
 
-    this.especialidades$ = this.especialistas$.pipe(
-      map((especialistas) => {
-        const set = new Set<string>();
-        especialistas.forEach((e) => {
-          (e.especialidades as string[])?.forEach((esp) => set.add(esp));
-        });
-        return Array.from(set).sort();
-      }),
-      startWith([])
-    );
-
-    combineLatest([this.especialistas$, this.pacientes$, this.especialidades$, this.me$]).subscribe(
-      ([especialistas, pacientes, especialidades, me]) => {
-        if (me && me.rol !== 'admin') {
-          this.pacienteSelId.set(me.uid);
-        }
-        this.cargando.set(false);
-      }
+    // Combinamos para saber cuándo terminó de cargar todo
+    combineLatest([this.especialistas$, this.pacientes$, this.me$]).subscribe(() =>
+      this.cargando.set(false)
     );
   }
 
-  // --- Pasos ---
-
-  seleccionarEspecialidad(especialidad: string) {
-    this.especialidadSel.set(especialidad);
-    this.especialistaSel.set(null);
-    this.diaSel.set(null);
-    this.horarioSel.set(null);
-    this.paso.set(2);
+  // --- Helper para imágenes de especialidad ---
+  getImagenEspecialidad(especialidad: string): string {
+    // Intenta buscar la imagen específica, sino usa la default
+    // Podrías usar un servicio o una lógica más compleja aquí si los nombres varían mucho
+    return (
+      this.imagenesEspecialidad[especialidad] ||
+      'https://placehold.co/100x60/e2e8f0/1e3a8a?text=' + especialidad.substring(0, 3).toUpperCase()
+    );
   }
+
+  // --- Pasos de Selección ---
 
   seleccionarEspecialista(especialista: Usuario) {
     this.especialistaSel.set(especialista);
+    this.especialidadSel.set(null);
     this.diaSel.set(null);
     this.horarioSel.set(null);
-    this.paso.set(3);
+    this.paso.set(2); // Ir a elegir especialidad
+  }
+
+  seleccionarEspecialidad(especialidad: string) {
+    this.especialidadSel.set(especialidad);
+    this.diaSel.set(null);
+    this.horarioSel.set(null);
+    this.paso.set(3); // Ir a elegir día
   }
 
   seleccionarDia(dia: Date) {
     this.diaSel.set(dia);
     this.horarioSel.set(null);
-    this.cargando.set(true);
+    // Generar horarios para este día
     this.horariosDisponibles.set(this.generarHorariosParaDia(dia));
-    this.cargando.set(false);
+    this.paso.set(4); // Ir a elegir horario (aunque se muestran en la misma pantalla a veces, conceptualmente es el paso 4)
   }
 
   seleccionarHorario(slot: HorarioSlot) {
     if (slot.ocupado) return;
     this.horarioSel.set(slot);
+    // No avanzamos de paso automáticamente, el usuario debe confirmar
   }
 
-  // --- Generación de Horarios ---
+  // --- Generación de Fechas/Horas ---
 
-  private generarProximos15Dias(especialista: Usuario | null): Date[] {
-    if (!especialista || !especialista.disponibilidad || !this.especialidadSel()) {
-      return [];
-    }
+  private generarProximos15Dias(especialista: Usuario, especialidad: string): Date[] {
+    if (!especialista.disponibilidad) return [];
 
-    const horariosEspecialidad = especialista.disponibilidad[this.especialidadSel()!];
-    if (!horariosEspecialidad || horariosEspecialidad.length === 0) {
-      return [];
-    }
+    const horariosEspecialidad = especialista.disponibilidad[especialidad];
+    if (!horariosEspecialidad || horariosEspecialidad.length === 0) return [];
 
     const diasQueTrabaja = new Set(horariosEspecialidad.map((h) => h.dia));
     const dias: Date[] = [];
@@ -227,24 +223,19 @@ export class SolicitarTurnoComponent {
   private generarHorariosParaDia(dia: Date): HorarioSlot[] {
     const especialista = this.especialistaSel();
     const especialidad = this.especialidadSel();
-    if (!especialista || !especialidad || !especialista.disponibilidad) {
-      return [];
-    }
+    if (!especialista || !especialidad || !especialista.disponibilidad) return [];
 
     const horarios: HorarioSlot[] = [];
     const diaSemana = dia.getDay();
     const ocupados = this.turnosOcupados();
 
-    const reglasEspecialidad = especialista.disponibilidad[especialidad] || [];
-    const reglasDelDia = reglasEspecialidad.filter((r) => r.dia === diaSemana);
+    const reglas = especialista.disponibilidad[especialidad].filter((r) => r.dia === diaSemana);
 
-    reglasDelDia.forEach((regla) => {
+    reglas.forEach((regla) => {
       const [startHour, startMin] = regla.desde.split(':').map(Number);
       const [endHour, endMin] = regla.hasta.split(':').map(Number);
-
       let slotDate = new Date(dia);
       slotDate.setHours(startHour, startMin, 0, 0);
-
       let endDate = new Date(dia);
       endDate.setHours(endHour, endMin, 0, 0);
 
@@ -265,8 +256,8 @@ export class SolicitarTurnoComponent {
 
   get puedeConfirmar(): boolean {
     return (
-      !!this.especialidadSel() &&
       !!this.especialistaSel() &&
+      !!this.especialidadSel() &&
       !!this.pacienteSelId() &&
       !!this.diaSel() &&
       !!this.horarioSel() &&
@@ -286,20 +277,14 @@ export class SolicitarTurnoComponent {
       const especialidad = this.especialidadSel()!;
       const fechaTurno = this.horarioSel()!.fecha;
 
-      // +++ INICIO VALIDACIÓN (Mismo día, misma especialidad) +++
-      // 1. Obtenemos los turnos del paciente
+      // Validación de turno duplicado en el mismo día/especialidad
       const turnosPaciente = await firstValueFrom(
         runInInjectionContext(this.env, () => this.turnoService.getTurnosParaPaciente(pacienteId))
       );
 
-      // 2. Revisamos si alguno coincide en fecha y especialidad
       const yaTieneTurno = turnosPaciente.some((t) => {
-        // Debe ser la misma especialidad
         if (t.especialidad !== especialidad) return false;
-        // El turno debe estar activo (no cancelado/rechazado)
         if (t.estado === 'cancelado' || t.estado === 'rechazado') return false;
-
-        // Debe ser el mismo día (ignoramos la hora)
         const tFecha = t.fecha.toDate();
         return (
           tFecha.getDate() === fechaTurno.getDate() &&
@@ -311,9 +296,8 @@ export class SolicitarTurnoComponent {
       if (yaTieneTurno) {
         this.error.set('Ya tenés un turno reservado para esta especialidad en este día.');
         this.cargando.set(false);
-        return; // Detenemos la creación del turno
+        return;
       }
-      // +++ FIN VALIDACIÓN +++
 
       let pacienteNombre = 'Paciente';
       if (this.isAdmin()) {
@@ -350,17 +334,25 @@ export class SolicitarTurnoComponent {
       this.router.navigate(['/bienvenida']);
       return;
     }
-    if (paso === 1) {
-      this.paso.set(1);
-      this.especialistaSel.set(null);
-    }
-    if (paso === 2) {
-      this.paso.set(2);
-      this.diaSel.set(null);
-      this.horarioSel.set(null);
+    // Lógica de retroceso
+    switch (this.paso()) {
+      case 2: // Estaba en Especialidad -> vuelve a Profesional (Paso 1)
+        this.paso.set(1);
+        this.especialistaSel.set(null);
+        break;
+      case 3: // Estaba en Día -> vuelve a Especialidad (Paso 2)
+        this.paso.set(2);
+        this.especialidadSel.set(null);
+        break;
+      case 4: // Estaba en Horario -> vuelve a Día (Paso 3)
+        this.paso.set(3);
+        this.diaSel.set(null);
+        this.horarioSel.set(null);
+        break;
     }
   }
 
+  // Helpers para el template
   getPacienteNombre(pacientes: Usuario[] | null, uid: string | null): string {
     if (!pacientes || !uid) return '...';
     const p = pacientes.find((p: Usuario) => p.uid === uid);

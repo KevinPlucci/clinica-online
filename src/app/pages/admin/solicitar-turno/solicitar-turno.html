@@ -1,13 +1,15 @@
 <div class="solicitar-container" *ngIf="me$ | async as me">
   <header class="solicitar-header">
     <h1>Solicitar Turno</h1>
-    <button type="button" class="btn btn-secondary" (click)="volver('inicio')">← Volver</button>
+    <button type="button" class="btn btn-secondary" (click)="volver('inicio')">
+      ← Volver al Inicio
+    </button>
   </header>
 
   <div class="solicitar-box">
     <!-- Selector de Paciente (SOLO ADMIN) -->
-    <div class="form-field" *ngIf="isAdmin() && (pacientes$ | async) as pacientes">
-      <label for="paciente-select">Seleccionar Paciente (Admin)</label>
+    <div class="admin-paciente-select" *ngIf="isAdmin() && (pacientes$ | async) as pacientes">
+      <label for="paciente-select">Seleccionar Paciente (Admin):</label>
       <select
         id="paciente-select"
         [ngModel]="pacienteSelId()"
@@ -15,133 +17,136 @@
       >
         <option [ngValue]="null" disabled>-- Elegí un paciente --</option>
         <option *ngFor="let p of pacientes" [ngValue]="p.uid">
-          {{ p.nombre }} {{ p.apellido }} ({{ p.email }})
+          {{ p.nombre }} {{ p.apellido }} ({{ p.dni }})
         </option>
       </select>
     </div>
 
-    <!-- PASO 1: ESPECIALIDAD -->
-    <div class="paso-container" *ngIf="paso() >= 1">
-      <h2>Paso 1: Elegí la especialidad</h2>
-      <div
-        class="selector-grid especialidad-grid"
-        *ngIf="especialidades$ | async as especialidades"
-      >
-        <button
-          type="button"
-          class="btn-selector"
-          *ngFor="let esp of especialidades"
-          [class.selected]="especialidadSel() === esp"
-          (click)="seleccionarEspecialidad(esp)"
-        >
-          <!-- Aquí podrías poner íconos -->
-          <span>{{ esp }}</span>
-        </button>
-      </div>
-      <div *ngIf="cargando()">Cargando especialidades...</div>
+    <!-- BARRA DE PROGRESO (Opcional pero útil) -->
+    <div class="progreso-pasos">
+      <div class="paso" [class.activo]="paso() >= 1">1. Profesional</div>
+      <div class="paso" [class.activo]="paso() >= 2">2. Especialidad</div>
+      <div class="paso" [class.activo]="paso() >= 3">3. Día</div>
+      <div class="paso" [class.activo]="paso() >= 4">4. Horario</div>
     </div>
 
-    <!-- PASO 2: ESPECIALISTA -->
-    <div class="paso-container" *ngIf="paso() >= 2">
-      <button class="btn-volver" (click)="volver(1)">&larr; Cambiar especialidad</button>
-      <h2>Paso 2: Elegí al especialista</h2>
-      <div class="selector-grid especialista-grid">
+    <!-- ========================================= -->
+    <!-- PASO 1: ELEGIR PROFESIONAL (Botones Cuadrados) -->
+    <!-- ========================================= -->
+    <div class="paso-container" *ngIf="paso() === 1">
+      <h2>Elegí al profesional</h2>
+      <div class="grid-profesionales" *ngIf="especialistas$ | async as especialistas">
         <button
           type="button"
-          class="btn-selector especialista"
-          *ngFor="let esp of especialistasFiltrados()"
-          [class.selected]="especialistaSel()?.uid === esp.uid"
+          class="btn-profesional"
+          *ngFor="let esp of especialistas"
           (click)="seleccionarEspecialista(esp)"
         >
-          <img
-            [src]="esp.fotoURL || 'assets/avatar-placeholder.png'"
-            alt="Foto de {{ esp.nombre }}"
-          />
-          <div class="especialista-info">
-            <span class="nombre">{{ esp.nombre }} {{ esp.apellido }}</span>
-            <span class="email">{{ esp.email }}</span>
-          </div>
+          <img [src]="esp.fotoURL || 'assets/avatar-placeholder.png'" alt="{{ esp.nombre }}" />
+          <span class="nombre">{{ esp.nombre }}<br />{{ esp.apellido }}</span>
         </button>
       </div>
-      <div *ngIf="cargando() && !especialistasFiltrados().length">Cargando especialistas...</div>
-      <div *ngIf="!cargando() && !especialistasFiltrados().length">
-        No hay especialistas disponibles para "{{ especialidadSel() }}".
-      </div>
+      <div *ngIf="cargando()">Cargando profesionales...</div>
     </div>
 
-    <!-- PASO 3: DÍA Y HORA -->
-    <div class="paso-container" *ngIf="paso() === 3">
-      <button class="btn-volver" (click)="volver(2)">&larr; Cambiar especialista</button>
-      <h2>Paso 3: Elegí el día y horario</h2>
-
-      <div class="calendario-container">
-        <!-- Columna de Días (Próximos 15) -->
-        <div class="dias-lista">
-          <h3>Próximos 15 días hábiles</h3>
-          <button
-            type="button"
-            class="btn-selector dia"
-            *ngFor="let dia of diasDisponibles()"
-            [class.selected]="diaSel()?.getTime() === dia.getTime()"
-            (click)="seleccionarDia(dia)"
-          >
-            {{ dia | date : 'EEEE dd/MM' | titlecase }}
-          </button>
-        </div>
-
-        <!-- Columna de Horarios -->
-        <div class="horarios-lista">
-          <h3 *ngIf="diaSel()">Horarios para el {{ diaSel() | date : 'dd/MM' }}</h3>
-          <h3 *ngIf="!diaSel()">Seleccioná un día</h3>
-
-          <div class="selector-grid horarios-grid" *ngIf="!cargando()">
-            <button
-              type="button"
-              class="btn-selector horario"
-              *ngFor="let slot of horariosDisponibles()"
-              [class.selected]="horarioSel()?.fecha?.getTime() === slot.fecha.getTime()"
-              [class.ocupado]="slot.ocupado"
-              [disabled]="slot.ocupado"
-              (click)="seleccionarHorario(slot)"
-              [title]="slot.ocupado ? 'Turno no disponible' : ''"
-            >
-              {{ slot.fecha | date : 'HH:mm' }}
-            </button>
-          </div>
-          <div *ngIf="cargando() && diaSel()">Buscando horarios...</div>
-          <div *ngIf="!cargando() && diaSel() && !horariosDisponibles().length">
-            No hay horarios configurados para este día.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Resumen y Confirmación -->
-    <div class="resumen-container" *ngIf="horarioSel() && (pacientes$ | async) as pacientes">
-      <h3>Turno seleccionado:</h3>
-      <p>
-        <span class="label">Paciente:</span>
-        <span *ngIf="!isAdmin()">{{ me.nombre }} {{ me.apellido }}</span>
-        <span *ngIf="isAdmin() && pacienteSelId()">{{
-          getPacienteNombre(pacientes, pacienteSelId())
-        }}</span>
-      </p>
-      <p><span class="label">Especialista:</span> {{ getEspecialistaNombre() }}</p>
-      <p>
-        <span class="label">Fecha:</span> {{ horarioSel()?.fecha | date : 'fullDate' | titlecase }}
-      </p>
-      <p><span class="label">Hora:</span> {{ horarioSel()?.fecha | date : 'HH:mm' }} hs</p>
-
-      <button
-        type="button"
-        class="btn btn-primary btn-confirmar"
-        [disabled]="!puedeConfirmar || cargando()"
-        (click)="confirmarTurno()"
-      >
-        {{ cargando() ? 'Procesando...' : 'Confirmar Turno' }}
+    <!-- ========================================= -->
+    <!-- PASO 2: ELEGIR ESPECIALIDAD (Botones Rectangulares) -->
+    <!-- ========================================= -->
+    <div class="paso-container" *ngIf="paso() === 2">
+      <button class="btn-volver-paso" (click)="volver(paso())">
+        &larr; Volver a Profesionales
       </button>
+      <h2>Elegí la especialidad de {{ getEspecialistaNombre() }}</h2>
 
-      <div class="msg msg--error" *ngIf="error()">{{ error() }}</div>
+      <div class="grid-especialidades">
+        <button
+          type="button"
+          class="btn-especialidad"
+          *ngFor="let esp of especialidadesDelProfesional()"
+          (click)="seleccionarEspecialidad(esp)"
+        >
+          <!-- Imagen por defecto o específica si la tuvieras -->
+          <img [src]="getImagenEspecialidad(esp)" alt="{{ esp }}" />
+          <span class="nombre">{{ esp }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- PASO 3: ELEGIR DÍA (Botones Cuadrados) -->
+    <!-- ========================================= -->
+    <div class="paso-container" *ngIf="paso() === 3">
+      <button class="btn-volver-paso" (click)="volver(paso())">
+        &larr; Volver a Especialidades
+      </button>
+      <h2>Elegí el día</h2>
+
+      <div class="grid-dias" *ngIf="diasDisponibles().length > 0; else sinDias">
+        <button
+          type="button"
+          class="btn-dia"
+          *ngFor="let dia of diasDisponibles()"
+          (click)="seleccionarDia(dia)"
+        >
+          <span class="dia-semana">{{ dia | date : 'EEE' | uppercase }}</span>
+          <span class="fecha">{{ dia | date : 'dd/MM' }}</span>
+        </button>
+      </div>
+      <ng-template #sinDias>
+        <p class="msg-vacio">
+          Este profesional no tiene días disponibles próximamente para esta especialidad.
+        </p>
+      </ng-template>
+    </div>
+
+    <!-- ========================================= -->
+    <!-- PASO 4: ELEGIR HORARIO (Botones Rectangulares Redondeados) -->
+    <!-- ========================================= -->
+    <div class="paso-container" *ngIf="paso() === 4">
+      <button class="btn-volver-paso" (click)="volver(paso())">&larr; Volver a Días</button>
+      <h2>Horarios para el {{ diaSel() | date : 'fullDate' | titlecase }}</h2>
+
+      <div class="grid-horarios" *ngIf="horariosDisponibles().length > 0; else sinHorarios">
+        <button
+          type="button"
+          class="btn-horario"
+          *ngFor="let slot of horariosDisponibles()"
+          [class.ocupado]="slot.ocupado"
+          [class.seleccionado]="horarioSel()?.fecha?.getTime() === slot.fecha.getTime()"
+          [disabled]="slot.ocupado"
+          (click)="seleccionarHorario(slot)"
+        >
+          {{ slot.fecha | date : 'hh:mm a' }}
+        </button>
+      </div>
+      <ng-template #sinHorarios>
+        <p class="msg-vacio">No hay horarios disponibles para este día.</p>
+      </ng-template>
+
+      <!-- Confirmación (Solo aparece al seleccionar horario) -->
+      <div class="confirmacion-final" *ngIf="horarioSel()">
+        <h3>Confirmar Turno</h3>
+        <p>
+          <strong>Paciente:</strong>
+          <span *ngIf="!isAdmin()">{{ me.nombre }} {{ me.apellido }}</span>
+          <span *ngIf="isAdmin() && pacienteSelId() && (pacientes$ | async) as pacs">
+            {{ getPacienteNombre(pacs, pacienteSelId()) }}
+          </span>
+        </p>
+        <p><strong>Profesional:</strong> {{ getEspecialistaNombre() }}</p>
+        <p><strong>Especialidad:</strong> {{ especialidadSel() }}</p>
+        <p><strong>Fecha:</strong> {{ horarioSel()?.fecha | date : 'dd/MM/yyyy hh:mm a' }}</p>
+
+        <button
+          class="btn btn-primary btn-block"
+          [disabled]="cargando()"
+          (click)="confirmarTurno()"
+        >
+          {{ cargando() ? 'Confirmando...' : 'CONFIRMAR TURNO' }}
+        </button>
+        <div class="error-msg" *ngIf="error()">{{ error() }}</div>
+      </div>
     </div>
   </div>
+  <!-- Fin solicitar-box -->
 </div>
