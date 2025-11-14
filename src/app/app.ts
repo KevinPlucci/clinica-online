@@ -1,5 +1,3 @@
-// src/app/app.ts
-
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -12,6 +10,8 @@ import {
 } from '@angular/router';
 import { SpinnerService } from './services/spinner.service';
 import { SpinnerComponent } from './shared/spinner/spinner';
+// +++ IMPORTAMOS LA ANIMACIÓN +++
+import { fadeAnimation } from './animations';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +19,7 @@ import { SpinnerComponent } from './shared/spinner/spinner';
   imports: [CommonModule, RouterOutlet, SpinnerComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss'],
+  animations: [fadeAnimation], // +++ REGISTRAMOS LA ANIMACIÓN +++
 })
 export class AppComponent {
   title = 'clinica-online';
@@ -26,7 +27,6 @@ export class AppComponent {
   private router = inject(Router);
 
   constructor(public spinnerSvc: SpinnerService) {
-    // Loading también para transiciones de ruta (además del interceptor HTTP)
     this.router.events.subscribe((evt) => {
       if (evt instanceof NavigationStart) {
         this.spinnerSvc.show();

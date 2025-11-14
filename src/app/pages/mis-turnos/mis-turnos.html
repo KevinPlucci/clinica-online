@@ -1,18 +1,14 @@
 <div class="turnos-container" *ngIf="me$ | async as me">
   <header class="turnos-header">
     <h1>Mis Turnos ({{ me.rol }})</h1>
-    <!-- Botón volver dinámico -->
     <a [routerLink]="getVolverLink(me.rol)" class="btn btn-secondary">← Volver</a>
   </header>
 
-  <!-- Filtro Único -->
   <div class="filtro-container">
     <input
       type="text"
       class="filtro-input"
-      placeholder="Filtrar por {{
-        me.rol === 'paciente' ? 'especialista o especialidad' : 'paciente o especialidad'
-      }}..."
+      placeholder="Buscar en todos los campos (paciente, espec., fecha, H.C...)"
       [(ngModel)]="filtroInput"
       (input)="actualizarFiltro()"
     />
@@ -21,15 +17,10 @@
     </button>
   </div>
 
-  <!-- Lista de Turnos -->
   <div
     class="turnos-lista"
-    *ngIf="
-      turnos$ | async | filtroTurnos : (filtro$ | async) ?? '' : me.rol as turnos;
-      else loading
-    "
+    *ngIf="turnos$ | async | filtroTurnos : (filtro$ | async) ?? '' as turnos; else loading"
   >
-    <!-- Vista Paciente -->
     <ng-container *ngIf="me.rol === 'paciente'">
       <div
         class="turno-card"
@@ -45,8 +36,6 @@
           <span class="estado-badge">{{ t.estado | uppercase }}</span>
         </div>
         <div class="turno-acciones">
-          <!-- Botones de Paciente -->
-          <!-- Cancelar -->
           <button
             *ngIf="t.estado === 'solicitado' || t.estado === 'aceptado'"
             class="btn btn-warn"
@@ -54,35 +43,42 @@
           >
             Cancelar
           </button>
-          <!-- Ver Reseña (del especialista) -->
+
+          <button
+            *ngIf="t.estado === 'realizado' && t.historiaClinica"
+            class="btn btn-secondary"
+            (click)="abrirModal('verReseña', t)"
+          >
+            Ver H. Clínica
+          </button>
+
+          <button
+            *ngIf="t.estado === 'realizado' && t.historiaClinica && !t.comentario"
+            class="btn btn-success"
+            (click)="abrirModal('calificar', t)"
+          >
+            Calificar
+          </button>
+
           <button
             *ngIf="t.estado === 'realizado' && t.comentario"
             class="btn btn-secondary"
             (click)="abrirModal('verReseña', t)"
           >
-            Ver Reseña
+            Ver Mi Calificación
           </button>
-          <!-- Calificar Atención -->
+
           <button
-            *ngIf="t.estado === 'realizado' && !t.comentario"
-            class="btn btn-success"
-            (click)="abrirModal('calificar', t)"
-          >
-            Calificar Atención
-          </button>
-          <!-- Completar Encuesta -->
-          <button
-            *ngIf="t.estado === 'realizado' && t.comentario && !t.encuestaData"
+            *ngIf="t.estado === 'realizado' && t.historiaClinica && !t.encuestaData"
             class="btn btn-info"
             (click)="abrirModal('encuesta', t)"
           >
-            Completar Encuesta
+            Encuesta
           </button>
         </div>
       </div>
     </ng-container>
 
-    <!-- Vista Especialista -->
     <ng-container *ngIf="me.rol === 'especialista'">
       <div
         class="turno-card"
@@ -98,8 +94,6 @@
           <span class="estado-badge">{{ t.estado | uppercase }}</span>
         </div>
         <div class="turno-acciones">
-          <!-- Botones de Especialista -->
-          <!-- Aceptar (Sin modal) -->
           <button
             *ngIf="t.estado === 'solicitado'"
             class="btn btn-success"
@@ -107,7 +101,6 @@
           >
             Aceptar
           </button>
-          <!-- Rechazar (Con modal) -->
           <button
             *ngIf="t.estado === 'solicitado'"
             class="btn btn-warn"
@@ -115,7 +108,6 @@
           >
             Rechazar
           </button>
-          <!-- Cancelar (Con modal) -->
           <button
             *ngIf="t.estado === 'aceptado'"
             class="btn btn-warn"
@@ -123,30 +115,29 @@
           >
             Cancelar
           </button>
-          <!-- Finalizar (Con modal) -->
+
           <button
             *ngIf="t.estado === 'aceptado'"
             class="btn btn-info"
             (click)="abrirModal('finalizar', t)"
           >
-            Finalizar Turno
+            Cargar H. Clínica
           </button>
-          <!-- Ver Reseña/Motivo -->
+
           <button
             *ngIf="
               (t.estado === 'realizado' || t.estado === 'cancelado' || t.estado === 'rechazado') &&
-              (t.comentario || t.motivoCancelacion)
+              (t.historiaClinica || t.comentario || t.motivoCancelacion)
             "
             class="btn btn-secondary"
             (click)="abrirModal('verReseña', t)"
           >
-            Ver Reseña/Motivo
+            Ver Detalle
           </button>
         </div>
       </div>
     </ng-container>
 
-    <!-- Mensaje si no hay turnos -->
     <div *ngIf="turnos.length === 0" class="no-turnos">
       <p>No tenés turnos que coincidan con la búsqueda.</p>
     </div>
@@ -157,43 +148,170 @@
   </ng-template>
 </div>
 
-<!-- Modal Genérico para Comentarios -->
 <div class="modal-overlay" *ngIf="modalVisible" (click)="cerrarModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <button class="modal-close" (click)="cerrarModal()">&times;</button>
 
-    <!-- Título dinámico -->
     <h3 *ngIf="modalContexto === 'cancelar'">Cancelar Turno</h3>
     <h3 *ngIf="modalContexto === 'rechazar'">Rechazar Turno</h3>
-    <h3 *ngIf="modalContexto === 'finalizar'">Finalizar Turno (Reseña)</h3>
+    <h3 *ngIf="modalContexto === 'finalizar'">Cargar Historia Clínica</h3>
     <h3 *ngIf="modalContexto === 'calificar'">Calificar Atención</h3>
     <h3 *ngIf="modalContexto === 'encuesta'">Completar Encuesta</h3>
-    <h3 *ngIf="modalContexto === 'verReseña'">Detalle de Reseña/Motivo</h3>
+    <h3 *ngIf="modalContexto === 'verReseña'">Detalle del Turno</h3>
 
-    <!-- Textarea (solo para input o ver reseña) -->
-    <!-- (Ya está corregido el error de TypeScript) -->
-    <div class="form-field">
-      <label *ngIf="modalContexto !== 'verReseña'">
-        {{ modalContexto === 'finalizar' ? 'Reseña/Diagnóstico:' : 'Motivo/Comentario:' }}
-      </label>
-      <textarea
-        rows="5"
-        [(ngModel)]="comentarioModal"
-        [readonly]="modalContexto === 'verReseña'"
-      ></textarea>
+    <ng-container [ngSwitch]="modalContexto">
+      <ng-container *ngSwitchCase="'finalizar'">
+        <form #hcForm="ngForm" class="hc-form">
+          <div class="hc-form-grid">
+            <div class="form-field">
+              <label for="hc_altura">Altura (cm)</label>
+              <input
+                type="number"
+                id="hc_altura"
+                name="hc_altura"
+                [(ngModel)]="historiaForm.altura"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="hc_peso">Peso (kg)</label>
+              <input
+                type="number"
+                id="hc_peso"
+                name="hc_peso"
+                [(ngModel)]="historiaForm.peso"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="hc_temp">Temperatura (°C)</label>
+              <input
+                type="number"
+                id="hc_temp"
+                name="hc_temp"
+                [(ngModel)]="historiaForm.temperatura"
+                required
+              />
+            </div>
+            <div class="form-field">
+              <label for="hc_presion">Presión (ej: 120/80)</label>
+              <input
+                type="text"
+                id="hc_presion"
+                name="hc_presion"
+                [(ngModel)]="historiaForm.presion"
+                required
+              />
+            </div>
+          </div>
 
-      <div class="err" *ngIf="errorModal">{{ errorModal }}</div>
-    </div>
+          <div class="hc-dinamicos">
+            <label>Datos Adicionales (Máx. 3)</label>
+            <div
+              *ngFor="
+                let dato of historiaForm.datosDinamicos;
+                let i = index;
+                trackBy: trackByDatoIndex
+              "
+              class="hc-dinamico-row"
+            >
+              <input
+                type="text"
+                placeholder="Clave (ej: Glucosa)"
+                [(ngModel)]="dato.clave"
+                [name]="'dato_clave_' + i"
+              />
+              <input
+                type="text"
+                placeholder="Valor (ej: 90 mg/dL)"
+                [(ngModel)]="dato.valor"
+                [name]="'dato_valor_' + i"
+              />
+              <button type="button" class="btn-remove-dato" (click)="quitarDatoDinamico(i)">
+                &times;
+              </button>
+            </div>
 
-    <!-- Botones del Modal -->
+            <button
+              type="button"
+              class="btn-add-dato"
+              (click)="agregarDatoDinamico()"
+              *ngIf="historiaForm.datosDinamicos.length < 3"
+            >
+              + Agregar dato
+            </button>
+          </div>
+
+          <div class="err" *ngIf="errorModal">{{ errorModal }}</div>
+        </form>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'verReseña'">
+        <div *ngIf="turnoSeleccionado?.historiaClinica as hc; else resenaSimple">
+          <div class="hc-view-grid">
+            <div class="hc-view-item">
+              <span>Altura</span>
+              <strong>{{ hc.altura }} cm</strong>
+            </div>
+            <div class="hc-view-item">
+              <span>Peso</span>
+              <strong>{{ hc.peso }} kg</strong>
+            </div>
+            <div class="hc-view-item">
+              <span>Temperatura</span>
+              <strong>{{ hc.temperatura }} °C</strong>
+            </div>
+            <div class="hc-view-item">
+              <span>Presión</span>
+              <strong>{{ hc.presion }}</strong>
+            </div>
+          </div>
+          <div class="hc-view-seccion" *ngIf="hc.datosDinamicos.length > 0">
+            <strong>Datos Adicionales:</strong>
+            <ul>
+              <li *ngFor="let dato of hc.datosDinamicos">
+                {{ dato.clave }}: <strong>{{ dato.valor }}</strong>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <ng-template #resenaSimple>
+          <div class="form-field">
+            <textarea rows="5" [ngModel]="comentarioModal" readonly></textarea>
+          </div>
+        </ng-template>
+      </ng-container>
+
+      <ng-container *ngSwitchDefault>
+        <div class="form-field">
+          <label>
+            {{ modalContexto === 'calificar' ? 'Calificación:' : 'Motivo/Comentario:' }}
+          </label>
+          <textarea rows="5" [(ngModel)]="comentarioModal"></textarea>
+          <div class="err" *ngIf="errorModal">{{ errorModal }}</div>
+        </div>
+      </ng-container>
+    </ng-container>
+
     <div class="modal-actions">
       <button type="button" class="btn btn-secondary" (click)="cerrarModal()">
         {{ modalContexto === 'verReseña' ? 'Cerrar' : 'Cancelar' }}
       </button>
+
       <button
         type="button"
         class="btn btn-primary"
-        *ngIf="modalContexto !== 'verReseña'"
+        *ngIf="modalContexto === 'finalizar'"
+        (click)="confirmarModal()"
+      >
+        Guardar H. Clínica
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        *ngIf="modalContexto !== 'verReseña' && modalContexto !== 'finalizar'"
         (click)="confirmarModal()"
       >
         Confirmar

@@ -47,7 +47,6 @@ export class SolicitarTurnoComponent {
   // Listas
   especialistas$!: Observable<Usuario[]>;
   pacientes$!: Observable<Usuario[]>;
-  // Ya no necesitamos la lista global de especialidades al inicio
 
   // --- Estado del Asistente ---
   paso = signal<1 | 2 | 3 | 4>(1); // 1: Profesional, 2: Especialidad, 3: Día, 4: Horario
@@ -68,12 +67,11 @@ export class SolicitarTurnoComponent {
 
   private turnosOcupados = signal<Set<number>>(new Set());
 
-  // Imágenes por defecto para especialidades (puedes agregar más)
+  // Imágenes por defecto para especialidades
   imagenesEspecialidad: { [key: string]: string } = {
     Traumatología: 'assets/especialidades/traumatologia.png',
     Cardiología: 'assets/especialidades/cardiologia.png',
     Pediatría: 'assets/especialidades/pediatria.png',
-    // ... otras
     default: 'assets/especialidades/default.png',
   };
 
@@ -110,11 +108,14 @@ export class SolicitarTurnoComponent {
 
         // Cargar sus turnos ocupados (para usarlos más adelante)
         this.cargando.set(true);
-        this.turnoService.getTurnosParaEspecialista(esp.uid).subscribe((turnos) => {
+
+        // CORRECCIÓN: Usar .then() en lugar de .subscribe() para una Promise
+        // y agregar tipos (Turno[]) y (t: Turno) para eliminar 'any'
+        this.turnoService.getTurnosParaEspecialista(esp.uid).then((turnos: Turno[]) => {
           const turnosActivos = turnos.filter(
-            (t) => t.estado !== 'cancelado' && t.estado !== 'rechazado'
+            (t: Turno) => t.estado !== 'cancelado' && t.estado !== 'rechazado'
           );
-          const ocupados = new Set(turnosActivos.map((t) => t.fecha.toDate().getTime()));
+          const ocupados = new Set(turnosActivos.map((t: Turno) => t.fecha.toDate().getTime()));
           this.turnosOcupados.set(ocupados);
           this.cargando.set(false);
 
@@ -158,8 +159,6 @@ export class SolicitarTurnoComponent {
 
   // --- Helper para imágenes de especialidad ---
   getImagenEspecialidad(especialidad: string): string {
-    // Intenta buscar la imagen específica, sino usa la default
-    // Podrías usar un servicio o una lógica más compleja aquí si los nombres varían mucho
     return (
       this.imagenesEspecialidad[especialidad] ||
       'https://placehold.co/100x60/e2e8f0/1e3a8a?text=' + especialidad.substring(0, 3).toUpperCase()
@@ -188,13 +187,12 @@ export class SolicitarTurnoComponent {
     this.horarioSel.set(null);
     // Generar horarios para este día
     this.horariosDisponibles.set(this.generarHorariosParaDia(dia));
-    this.paso.set(4); // Ir a elegir horario (aunque se muestran en la misma pantalla a veces, conceptualmente es el paso 4)
+    this.paso.set(4); // Ir a elegir horario
   }
 
   seleccionarHorario(slot: HorarioSlot) {
     if (slot.ocupado) return;
     this.horarioSel.set(slot);
-    // No avanzamos de paso automáticamente, el usuario debe confirmar
   }
 
   // --- Generación de Fechas/Horas ---
@@ -277,12 +275,13 @@ export class SolicitarTurnoComponent {
       const especialidad = this.especialidadSel()!;
       const fechaTurno = this.horarioSel()!.fecha;
 
-      // Validación de turno duplicado en el mismo día/especialidad
-      const turnosPaciente = await firstValueFrom(
-        runInInjectionContext(this.env, () => this.turnoService.getTurnosParaPaciente(pacienteId))
-      );
+      // Validación de turno duplicado
 
-      const yaTieneTurno = turnosPaciente.some((t) => {
+      // CORRECCIÓN: 'getTurnosParaPaciente' devuelve una Promise, no necesita 'firstValueFrom'.
+      const turnosPaciente = await this.turnoService.getTurnosParaPaciente(pacienteId);
+
+      // CORRECCIÓN: Agregar tipo (t: Turno) para eliminar 'any'
+      const yaTieneTurno = turnosPaciente.some((t: Turno) => {
         if (t.especialidad !== especialidad) return false;
         if (t.estado === 'cancelado' || t.estado === 'rechazado') return false;
         const tFecha = t.fecha.toDate();

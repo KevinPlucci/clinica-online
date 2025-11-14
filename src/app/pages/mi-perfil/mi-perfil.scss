@@ -134,6 +134,17 @@
 }
 /* +++ FIN MODIFICACIÓN (Diseño Moderno) +++ */
 
+/* +++ MI MODIFICACIÓN: Estilos para la sección de H.C. +++ */
+.perfil-seccion {
+  padding: 2.5rem; // Igual que .perfil-info
+  border-bottom: 1px solid #e2e8f0;
+
+  h3 {
+    margin-top: 0; // Para que se alinie con el padding
+    margin-bottom: 1rem; // Espacio antes de la lista
+  }
+}
+/* +++ FIN MODIFICACIÓN +++ */
 
 .chip-container {
   display: flex;
@@ -280,7 +291,7 @@
   gap: 1rem;
   margin-top: 2rem;
   border-top: 1px solid #e2e8f0;
-  padding-top: 1.5rem;
+  padding-top: 1.5rem; /* <-- ESTA ERA LA LÍNEA CON EL ERROR (decía 'content') */
 }
 
 
@@ -328,4 +339,13 @@
   color: #334155;
   border-color: #cbd5e1;
   &:hover { background: #f8fafc; }
+}
+
+// En mi-perfil.scss
+.acciones-paciente {
+  margin-top: 1.5rem;
+  .btn-pdf {
+    background-color: #dc2626; // Un rojo para que parezca PDF
+    &:hover { background-color: #b91c1c; }
+  } // <-- AQUÍ ESTABA LA 'F' (YA LA BORRÉ)
 }

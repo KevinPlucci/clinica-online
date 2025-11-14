@@ -1,0 +1,32 @@
+<div class="historial-wrapper">
+  <div *ngIf="cargando()" class="estado-simple">
+    <div class="spinner"></div>
+    <p>Cargando historial...</p>
+  </div>
+
+  <div *ngIf="!cargando() && historial().length === 0" class="estado-simple">
+    <p>No hay registros de atención finalizada.</p>
+  </div>
+
+  <div *ngIf="!cargando() && historial().length > 0" class="lista-historial">
+    <div class="turno-card" *ngFor="let turno of historial()">
+      <div class="turno-header">
+        <span class="fecha">
+          {{ turno.fecha.toDate() | date : 'dd/MM/yyyy' }} a las
+          {{ turno.fecha.toDate() | date : 'HH:mm' }} hs
+        </span>
+        <span class="chip">{{ turno.especialidad }}</span>
+      </div>
+
+      <div class="turno-body">
+        <p><strong>Profesional:</strong> {{ turno.especialistaNombre }}</p>
+        <p>
+          <strong>Reseña/Diagnóstico:</strong>
+        </p>
+        <blockquote class="reseña">
+          {{ turno.comentario || 'Sin observaciones.' }}
+        </blockquote>
+      </div>
+    </div>
+  </div>
+</div>

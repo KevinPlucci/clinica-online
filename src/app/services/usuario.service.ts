@@ -8,8 +8,11 @@ import {
   updateDoc,
   setDoc,
   getDoc,
+  query,
+  where,
+  getDocs,
 } from '@angular/fire/firestore';
-import { Usuario, Rol, HorarioConfig } from '../models/usuario'; // +++ Importar HorarioConfig +++
+import { Usuario, Rol, HorarioConfig } from '../models/usuario';
 import { map, Observable, defer } from 'rxjs';
 import { AuditService } from './audit.service';
 
@@ -17,44 +20,40 @@ import { AuditService } from './audit.service';
 export class UsuarioService {
   private firestore = inject(Firestore);
   private audit = inject(AuditService);
-  private env = inject(EnvironmentInjector); // para asegurar contexto de inyección
+  private env = inject(EnvironmentInjector);
+
+  private usersRef = collection(this.firestore, 'usuarios');
+
+  // --- Funciones Observable (Sin Cambios) ---
 
   usuarios$(): Observable<Usuario[]> {
-    const col = collection(this.firestore, 'usuarios');
-    // Envolvemos collectionData en el contexto de inyección
     return defer(() =>
-      runInInjectionContext(this.env, () => collectionData(col, { idField: 'uid' }))
+      runInInjectionContext(this.env, () => collectionData(this.usersRef, { idField: 'uid' }))
     ).pipe(map((arr: any[]) => (arr as Usuario[]) || []));
   }
 
   getUsuario(uid: string): Observable<Usuario | null> {
     const ref = doc(this.firestore, 'usuarios', uid);
-    // Envolvemos docData en el contexto de inyección
     return defer(() =>
       runInInjectionContext(this.env, () => docData(ref, { idField: 'uid' }))
     ).pipe(map((u: any) => (u ? (u as Usuario) : null)));
   }
 
+  // --- Acciones (Sin Cambios) ---
+
   async setUsuario(uid: string, data: Partial<Usuario>) {
     const ref = doc(this.firestore, 'usuarios', uid);
-    // Envolvemos setDoc en el contexto de inyección
     await runInInjectionContext(this.env, () => setDoc(ref, data as any, { merge: true }));
   }
 
   async updateRol(uid: string, rol: Rol) {
     const ref = doc(this.firestore, 'usuarios', uid);
-    // Envolvemos updateDoc en el contexto de inyección
     await runInInjectionContext(this.env, () => updateDoc(ref, { rol } as any));
     await this.audit.log('usuario/update-rol', uid, { rol });
   }
 
-  /**
-   * Cambia 'habilitado' SOLO si el usuario es ESPECIALISTA. Audita la acción.
-   */
   async updateHabilitado(uid: string, habilitado: boolean) {
     const ref = doc(this.firestore, 'usuarios', uid);
-
-    // Envolvemos getDoc en el contexto de inyección
     const snap = await runInInjectionContext(this.env, () => getDoc(ref));
     if (!snap.exists()) throw new Error('Usuario no encontrado');
 
@@ -65,7 +64,6 @@ export class UsuarioService {
       throw err;
     }
 
-    // Envolvemos updateDoc en el contexto de inyección
     await runInInjectionContext(this.env, () => updateDoc(ref, { habilitado } as any));
 
     await this.audit.log(habilitado ? 'usuario/habilitar' : 'usuario/inhabilitar', uid, {
@@ -75,23 +73,54 @@ export class UsuarioService {
     });
   }
 
-  // +++ INICIO MODIFICACIÓN (Guardar Horarios) +++
-  /**
-   * Guarda el objeto de disponibilidad horaria para un especialista.
-   * Convierte el Map del formulario en un Objeto plano para Firestore.
-   */
   async guardarHorariosDisponibles(uid: string, horariosMap: Map<string, HorarioConfig[]>) {
-    // Convertir el Map a un objeto plano
     const disponibilidadObj: { [key: string]: HorarioConfig[] } = {};
     horariosMap.forEach((value, key) => {
       disponibilidadObj[key] = value;
     });
 
     const ref = doc(this.firestore, 'usuarios', uid);
-    // Usamos runInInjectionContext para la llamada a Firestore
     await runInInjectionContext(this.env, () =>
       updateDoc(ref, { disponibilidad: disponibilidadObj })
     );
   }
-  // +++ FIN MODIFICACIÓN +++
+
+  // +++ INICIO: NUEVAS FUNCIONES ASYNC (Promise) +++
+
+  /**
+   * Obtiene TODOS los usuarios (devuelve Promesa)
+   * +++ ESTA ES LA FUNCIÓN CORREGIDA +++
+   */
+  async getAllUsuarios(): Promise<Usuario[]> {
+    const querySnapshot = await getDocs(this.usersRef);
+    // Mapeamos los documentos y AÑADIMOS EL ID (uid)
+    return querySnapshot.docs.map((doc) => {
+      return {
+        uid: doc.id,
+        ...doc.data(),
+      } as Usuario;
+    });
+  }
+
+  /**
+   * Obtiene un grupo de usuarios por sus IDs (devuelve Promesa)
+   * +++ CORREGIDO TAMBIÉN POR SI ACASO +++
+   */
+  async getUsuariosPorListaDeIds(ids: string[]): Promise<Usuario[]> {
+    if (!ids || ids.length === 0) {
+      return [];
+    }
+
+    // Asumimos menos de 30 IDs
+    const q = query(this.usersRef, where('uid', 'in', ids));
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => {
+      return {
+        uid: doc.id,
+        ...doc.data(),
+      } as Usuario;
+    });
+  }
+  // +++ FIN: NUEVAS FUNCIONES ASYNC +++
 }

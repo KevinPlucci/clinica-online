@@ -1,20 +1,30 @@
 import { Component, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms'; // FormsModule es necesario para [(ngModel)]
 import { Observable, BehaviorSubject, switchMap, of } from 'rxjs';
 
 // Servicios y Modelos
 import { AuthService } from '../../services/auth.service';
 import { TurnoService } from '../../services/turno.service';
 import { Usuario } from '../../models/usuario';
-import { Turno } from '../../models/turno';
+// +++ CAMBIO: Importamos las nuevas interfaces +++
+import { Turno, HistoriaClinica, DatoDinamico } from '../../models/turno';
 
 // Pipes
 import { FiltroTurnosPipe } from '../../pipes/filtro-turnos.pipe';
 
-// Tipo para el contexto del modal
+// +++ CAMBIO: 'finalizar' ahora usa el form de H.C. +++
 type ModalContexto = 'cancelar' | 'rechazar' | 'finalizar' | 'calificar' | 'encuesta' | 'verReseña';
+
+// +++ NUEVO: Valor inicial para el formulario de H.C. +++
+const HISTORIA_VACIA: HistoriaClinica = {
+  altura: 0,
+  peso: 0,
+  temperatura: 0,
+  presion: '',
+  datosDinamicos: [],
+};
 
 @Component({
   selector: 'app-mis-turnos',
@@ -29,11 +39,9 @@ export class MisTurnosComponent {
   private router = inject(Router);
   private env = inject(EnvironmentInjector);
 
-  // Datos del usuario y sus turnos
   me$: Observable<Usuario | null> = this.auth.me$;
   turnos$: Observable<Turno[]>;
 
-  // Filtro
   filtro$ = new BehaviorSubject<string>('');
   filtroInput = '';
 
@@ -44,22 +52,22 @@ export class MisTurnosComponent {
   comentarioModal = '';
   errorModal = '';
 
+  // +++ NUEVO: Estado para el formulario de Historia Clínica +++
+  // Hacemos una copia profunda para evitar mutaciones
+  historiaForm: HistoriaClinica = JSON.parse(JSON.stringify(HISTORIA_VACIA));
+
   constructor() {
-    // Obtenemos los turnos basándonos en el rol del usuario
     this.turnos$ = this.auth.me$.pipe(
       switchMap((user) => {
         if (!user) return of([]);
-
-        // Usamos this.env (inyectado en la clase) y runInInjectionContext
-        // para llamar a los servicios de forma segura.
         return runInInjectionContext(this.env, () => {
           if (user.rol === 'paciente') {
-            return this.turnoService.getTurnosParaPaciente(user.uid);
+            return this.turnoService.getTurnosParaPaciente$(user.uid);
           }
           if (user.rol === 'especialista') {
-            return this.turnoService.getTurnosParaEspecialista(user.uid);
+            return this.turnoService.getTurnosParaEspecialista$(user.uid);
           }
-          return of([]); // Admin u otro rol ven un array vacío
+          return of([]);
         });
       })
     );
@@ -74,10 +82,6 @@ export class MisTurnosComponent {
     this.actualizarFiltro();
   }
 
-  /**
-   * Devuelve el link de "vuelta" según el rol del usuario.
-   * Esto nos lleva a la pantalla de bienvenida específica de ese rol.
-   */
   getVolverLink(rol: Usuario['rol']): string {
     switch (rol) {
       case 'paciente':
@@ -85,22 +89,25 @@ export class MisTurnosComponent {
       case 'especialista':
         return '/especialista/agenda';
       default:
-        return '/bienvenida'; // Fallback
+        return '/bienvenida';
     }
   }
 
   // --- Lógica del Modal ---
 
-  /**
-   * Abre el modal para una acción específica (cancelar, finalizar, etc.)
-   */
   abrirModal(contexto: ModalContexto, turno: Turno) {
     this.modalContexto = contexto;
     this.turnoSeleccionado = turno;
     this.comentarioModal = '';
     this.errorModal = '';
 
-    // Si es "verReseña", precargamos el comentario
+    // +++ NUEVO: Si abrimos el modal 'finalizar', reseteamos el form de H.C. +++
+    if (contexto === 'finalizar') {
+      this.resetHistoriaForm();
+    }
+
+    // Si es "verReseña", precargamos el comentario (para cancelaciones, etc.)
+    // La H.C. se leerá directamente de 'turnoSeleccionado' en el HTML
     if (contexto === 'verReseña') {
       this.comentarioModal = turno.comentario || turno.motivoCancelacion || 'No hay reseña.';
     }
@@ -114,21 +121,36 @@ export class MisTurnosComponent {
     this.turnoSeleccionado = null;
   }
 
-  /**
-   * Confirma la acción del modal
-   */
   async confirmarModal() {
     if (!this.turnoSeleccionado) return;
     const id = this.turnoSeleccionado.id;
     const comentario = this.comentarioModal.trim();
 
-    // Validamos que se ingrese un comentario si es necesario
-    // (Ya está corregido el error de TypeScript)
-    if (
-      this.modalContexto !== 'verReseña' &&
-      this.modalContexto !== 'encuesta' && // Encuesta puede ser un form más complejo
-      !comentario
-    ) {
+    // +++ NUEVO: Lógica de confirmación para 'finalizar' (Guardar H.C.) +++
+    if (this.modalContexto === 'finalizar') {
+      if (this.validarHistoriaClinica()) {
+        try {
+          // Filtramos datos dinámicos vacíos
+          const hcLimpia = {
+            ...this.historiaForm,
+            datosDinamicos: this.historiaForm.datosDinamicos.filter(
+              (d) => d.clave.trim() !== '' && d.valor.trim() !== ''
+            ),
+          };
+          await this.turnoService.finalizarTurno(id, hcLimpia);
+          this.cerrarModal();
+        } catch (e) {
+          console.error(e);
+          this.errorModal = 'Ocurrió un error al guardar la Historia Clínica.';
+        }
+      }
+      return; // Detenemos la ejecución aquí
+    }
+
+    // --- Lógica anterior (para otros modales) ---
+
+    // Validamos comentario (excepto para 'verReseña' y 'finalizar')
+    if (this.modalContexto !== 'verReseña' && !comentario) {
       this.errorModal = 'Por favor, dejá un comentario para continuar.';
       return;
     }
@@ -136,7 +158,6 @@ export class MisTurnosComponent {
     this.errorModal = '';
 
     try {
-      // Ejecutamos la acción del servicio de turnos
       switch (this.modalContexto) {
         case 'cancelar':
           await this.turnoService.cancelarTurno(id, comentario);
@@ -144,19 +165,12 @@ export class MisTurnosComponent {
         case 'rechazar':
           await this.turnoService.rechazarTurno(id, comentario);
           break;
-        case 'finalizar':
-          await this.turnoService.finalizarTurno(id, comentario);
-          break;
         case 'calificar':
           await this.turnoService.calificarAtencion(id, comentario);
           break;
         case 'encuesta':
-          // Lógica simple, solo guardamos el texto.
-          await this.turnoService.completarEncuesta(id, {
-            respuesta: comentario,
-          });
+          await this.turnoService.completarEncuesta(id, { respuesta: comentario });
           break;
-        // 'verReseña' no hace nada al confirmar
       }
       this.cerrarModal();
     } catch (e) {
@@ -174,6 +188,42 @@ export class MisTurnosComponent {
       console.error(e);
       alert('Error al aceptar el turno.');
     }
+  }
+
+  // --- +++ NUEVOS Métodos para Formulario H.C. +++ ---
+
+  private resetHistoriaForm() {
+    // Copia profunda para resetear
+    this.historiaForm = JSON.parse(JSON.stringify(HISTORIA_VACIA));
+  }
+
+  private validarHistoriaClinica(): boolean {
+    const { altura, peso, temperatura, presion } = this.historiaForm;
+    if (!altura || !peso || !temperatura || !presion.trim()) {
+      this.errorModal = 'Por favor, completá los 4 campos fijos (altura, peso, temp y presión).';
+      return false;
+    }
+    if (altura <= 0 || peso <= 0 || temperatura <= 0) {
+      this.errorModal = 'Altura, Peso y Temperatura deben ser valores positivos.';
+      return false;
+    }
+    this.errorModal = '';
+    return true;
+  }
+
+  agregarDatoDinamico() {
+    if (this.historiaForm.datosDinamicos.length < 3) {
+      this.historiaForm.datosDinamicos.push({ clave: '', valor: '' });
+    }
+  }
+
+  quitarDatoDinamico(index: number) {
+    this.historiaForm.datosDinamicos.splice(index, 1);
+  }
+
+  // Helper para el ngFor de datos dinámicos
+  trackByDatoIndex(index: number, dato: DatoDinamico): number {
+    return index;
   }
 
   // Helper para el template

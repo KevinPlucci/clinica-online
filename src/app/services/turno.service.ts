@@ -8,61 +8,52 @@ import {
   doc,
   updateDoc,
   CollectionReference,
-  addDoc, // +++ IMPORTAR addDoc +++
+  addDoc,
+  getDocs,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-import { Turno } from '../models/turno';
+// +++ CAMBIO: Importamos las nuevas interfaces +++
+import { Turno, HistoriaClinica } from '../models/turno';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TurnoService {
   private firestore = inject(Firestore);
-
-  // Declaramos la variable aquí
   private turnosCol: CollectionReference;
 
   constructor() {
-    // E inicializamos la colección DENTRO del constructor
     this.turnosCol = collection(this.firestore, 'turnos');
   }
 
-  // Obtiene los turnos de un paciente específico
-  getTurnosParaPaciente(pacienteId: string): Observable<Turno[]> {
+  // --- Observables (Sin cambios) ---
+
+  getTurnosParaPaciente$(pacienteId: string): Observable<Turno[]> {
     const q = query(this.turnosCol, where('pacienteId', '==', pacienteId));
     return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
   }
 
-  // Obtiene los turnos de un especialista específico
-  getTurnosParaEspecialista(especialistaId: string): Observable<Turno[]> {
+  getTurnosParaEspecialista$(especialistaId: string): Observable<Turno[]> {
     const q = query(this.turnosCol, where('especialistaId', '==', especialistaId));
     return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
   }
 
-  // Obtiene TODOS los turnos para el admin
-  getAllTurnos(): Observable<Turno[]> {
-    const q = query(this.turnosCol); // Sin filtros
+  getAllTurnos$(): Observable<Turno[]> {
+    const q = query(this.turnosCol);
     return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
   }
 
   // --- Acciones ---
 
-  // +++ INICIO MODIFICACIÓN (Crear Turno) +++
-  /**
-   * Crea un nuevo documento de turno en la colección
-   */
   crearTurno(turno: Omit<Turno, 'id'>): Promise<any> {
-    // addDoc genera un ID automático
     return addDoc(this.turnosCol, turno);
   }
-  // +++ FIN MODIFICACIÓN +++
 
   private async updateTurno(id: string, data: Partial<Turno>) {
     const docRef = doc(this.firestore, `turnos/${id}`);
     return updateDoc(docRef, data as any);
   }
 
-  // ACCIONES DE ESPECIALISTA
   aceptarTurno(id: string) {
     return this.updateTurno(id, { estado: 'aceptado' });
   }
@@ -71,22 +62,38 @@ export class TurnoService {
     return this.updateTurno(id, { estado: 'rechazado', motivoCancelacion: motivo });
   }
 
-  finalizarTurno(id: string, reseña: string) {
-    return this.updateTurno(id, { estado: 'realizado', comentario: reseña });
+  // +++ MODIFICADO +++
+  // Ahora recibe el objeto HistoriaClinica completo
+  finalizarTurno(id: string, historia: HistoriaClinica) {
+    return this.updateTurno(id, {
+      estado: 'realizado',
+      historiaClinica: historia,
+    });
   }
 
-  // ACCIONES DE PACIENTE
   calificarAtencion(id: string, calificacion: string) {
     return this.updateTurno(id, { comentario: calificacion });
   }
 
   completarEncuesta(id: string, data: any) {
-    // Aquí podrías guardar un objeto más complejo si la encuesta tiene varias preguntas
     return this.updateTurno(id, { encuestaData: data });
   }
 
-  // ACCIÓN DE AMBOS (Y ADMIN)
   cancelarTurno(id: string, motivo: string) {
     return this.updateTurno(id, { estado: 'cancelado', motivoCancelacion: motivo });
+  }
+
+  // --- Funciones Async (Sin cambios) ---
+
+  async getTurnosParaPaciente(pacienteId: string): Promise<Turno[]> {
+    const q = query(this.turnosCol, where('pacienteId', '==', pacienteId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Turno));
+  }
+
+  async getTurnosParaEspecialista(especialistaId: string): Promise<Turno[]> {
+    const q = query(this.turnosCol, where('especialistaId', '==', especialistaId));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Turno));
   }
 }

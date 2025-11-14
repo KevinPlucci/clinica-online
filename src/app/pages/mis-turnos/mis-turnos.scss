@@ -1,30 +1,26 @@
-/* +++ INICIO MODIFICACIÓN (Fondo de Pantalla) +++ */
-/* Aplicamos el fondo a toda la página del componente */
+/* Aplicamos el fondo a toda la página */
 :host {
-  display: block; // Asegura que el host ocupe espacio
-  min-height: 100vh; // Ocupa toda la altura
-  padding: 2rem; // Espacio en bordes (móvil)
+  display: block;
+  min-height: 100vh;
+  padding: 2rem;
   box-sizing: border-box;
-
-  /* La ruta sube 4 niveles: mis-turnos -> pages -> app -> src */
   background-image: url('../../../assets/fondo_de_pantalla.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
-/* +++ FIN MODIFICACIÓN +++ */
 
-// --- Contenedor Principal (AHORA ES LA TARJETA) ---
+// --- Contenedor Principal (Tarjeta) ---
 .turnos-container {
   max-width: 900px;
-  margin: 0 auto; /* +++ Centrado automático +++ */
-  padding: 2.5rem; /* +++ Padding de tarjeta +++ */
-  background: rgba(255, 255, 255, 0.98); /* +++ Fondo blanco +++ */
-  border-radius: 16px; /* +++ Bordes redondeados +++ */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* +++ Sombra +++ */
+  margin: 0 auto;
+  padding: 2.5rem;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
-  width: 100%; /* +++ Asegura que ocupe el max-width +++ */
-  box-sizing: border-box; /* +++ Añadido +++ */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .turnos-header {
@@ -96,15 +92,14 @@
 
 .turno-card {
   display: grid;
-  /* +++ Responsive grid +++ */
-  grid-template-columns: 2fr 1fr; /* Stack estado/acciones en móvil */
+  grid-template-columns: 2fr 1fr;
   grid-template-areas:
-    "info estado"
-    "info acciones";
+    'info estado'
+    'info acciones';
   align-items: center;
   gap: 0.5rem 1rem;
   padding: 1.25rem;
-  background: #fff; /* +++ Fondo blanco para la tarjeta +++ */
+  background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
   transition: all 0.2s ease;
@@ -116,15 +111,14 @@
   &[data-estado='cancelado'] { border-left: 5px solid #ef4444; }
   &[data-estado='rechazado'] { border-left: 5px solid #713f12; }
 
-  /* +++ Media query para PC +++ */
   @media (min-width: 768px) {
     grid-template-columns: 2fr 1fr 2fr;
-    grid-template-areas: "info estado acciones";
+    grid-template-areas: 'info estado acciones';
   }
 }
 
 .turno-info {
-  grid-area: info; /* +++ Asignación de área +++ */
+  grid-area: info;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -135,23 +129,21 @@
   font-weight: 500;
   color: #1e293b;
 }
-
 .turno-especialidad {
   font-size: 1rem;
   color: #334155;
   font-weight: 500;
 }
-
 .turno-actor {
   font-size: 0.9rem;
   color: #475569;
 }
 
 .turno-estado {
-  grid-area: estado; /* +++ Asignación de área +++ */
-  text-align: left; /* +++ Alineación móvil +++ */
+  grid-area: estado;
+  text-align: left;
   @media (min-width: 768px) {
-    text-align: center; /* +++ Alineación PC +++ */
+    text-align: center;
   }
 }
 
@@ -166,13 +158,13 @@
 }
 
 .turno-acciones {
-  grid-area: acciones; /* +++ Asignación de área +++ */
+  grid-area: acciones;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  justify-content: flex-start; /* +++ Alineación móvil +++ */
+  justify-content: flex-start;
   @media (min-width: 768px) {
-    justify-content: flex-end; /* +++ Alineación PC +++ */
+    justify-content: flex-end;
   }
 }
 
@@ -188,7 +180,8 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 1rem; /* +++ Padding móvil +++ */
+  padding: 1rem;
+  overflow-y: auto; // +++ Permite scroll si el modal es largo
 }
 
 .modal-content {
@@ -196,9 +189,10 @@
   padding: 1.5rem 2rem;
   border-radius: 12px;
   width: 100%;
-  max-width: 500px;
+  max-width: 550px; // +++ Un poco más ancho para el form
   position: relative;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin: auto 0; // +++ Centra verticalmente
 }
 
 .modal-close {
@@ -231,7 +225,9 @@
     margin-bottom: 0.5rem;
   }
 
-  textarea {
+  textarea,
+  input[type='text'],
+  input[type='number'] {
     width: 100%;
     font-family: sans-serif;
     font-size: 1rem;
@@ -260,7 +256,111 @@
   margin-top: 1.5rem;
 }
 
-/* --- Estilos de Botones (similares a los de bienvenida) --- */
+/* --- +++ NUEVO: Estilos Formulario H.C. +++ --- */
+.hc-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hc-dinamicos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #334155;
+  }
+}
+
+.hc-dinamico-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+
+  input {
+    flex: 1; // Ocupan el espacio disponible
+    font-size: 0.9rem;
+    padding: 0.6rem 0.75rem;
+  }
+}
+
+.btn-add-dato {
+  background: none;
+  border: 1px dashed #94a3b8;
+  color: #334155;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  margin-top: 0.5rem;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #334155;
+  }
+}
+
+.btn-remove-dato {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 0;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0; // Evita que se encoja
+}
+
+/* --- +++ NUEVO: Estilos Vista H.C. (Read-only) +++ --- */
+.hc-view-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.hc-view-item {
+  display: flex;
+  flex-direction: column;
+  span {
+    font-size: 0.8rem;
+    color: #475569;
+  }
+  strong {
+    font-size: 1.1rem;
+    color: #1e293b;
+  }
+}
+
+.hc-view-seccion {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+
+  strong {
+    font-size: 0.9rem;
+    color: #334155;
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+  ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 0.9rem;
+  }
+}
+
+/* --- Estilos de Botones (Generales) --- */
 .btn,
 .btn-primary,
 .btn-secondary,

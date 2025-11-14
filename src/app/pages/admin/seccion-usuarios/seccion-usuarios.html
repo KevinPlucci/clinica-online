@@ -1,189 +1,245 @@
 <app-toasts></app-toasts>
 
-<div class="container">
-  <h2>Usuarios</h2>
+<div class="layout-container-admin">
+  <div class="lista-panel-admin">
+    <div class="container">
+      <h2>Usuarios</h2>
 
-  <div class="toolbar">
-    <div class="filters">
-      <input
-        type="search"
-        placeholder="Buscar por nombre, email o DNI…"
-        [ngModel]="query()"
-        (ngModelChange)="query.set($event)"
-      />
+      <div class="toolbar">
+        <div class="filters">
+          <input
+            type="search"
+            placeholder="Buscar por nombre, email o DNI…"
+            [ngModel]="query()"
+            (ngModelChange)="query.set($event)"
+          />
+          <select [ngModel]="rol()" (ngModelChange)="rol.set($event)">
+            <option value="all">Todos los roles</option>
+            <option value="admin">Administrador</option>
+            <option value="paciente">Paciente</option>
+            <option value="especialista">Especialista</option>
+          </select>
+          <select [ngModel]="estado()" (ngModelChange)="estado.set($event)">
+            <option value="all">Todos los estados</option>
+            <option value="habilitado">Habilitados</option>
+            <option value="inhabilitado">Inhabilitados</option>
+          </select>
+          <select [ngModel]="verif()" (ngModelChange)="verif.set($event)">
+            <option value="all">Verificación</option>
+            <option value="verificado">Verificados</option>
+            <option value="noverificado">Sin verificar</option>
+          </select>
+        </div>
 
-      <select [ngModel]="rol()" (ngModelChange)="rol.set($event)">
-        <option value="all">Todos los roles</option>
-        <option value="admin">Administrador</option>
-        <option value="paciente">Paciente</option>
-        <option value="especialista">Especialista</option>
-      </select>
-
-      <select [ngModel]="estado()" (ngModelChange)="estado.set($event)">
-        <option value="all">Todos los estados</option>
-        <option value="habilitado">Habilitados</option>
-        <option value="inhabilitado">Inhabilitados</option>
-      </select>
-
-      <select [ngModel]="verif()" (ngModelChange)="verif.set($event)">
-        <option value="all">Todos</option>
-        <option value="verificado">Verificados</option>
-        <option value="noverificado">Sin verificar</option>
-      </select>
-    </div>
-
-    <div class="actions">
-      <button class="btn-outline" (click)="volverABienvenida()">← Volver a Bienvenida</button>
-
-      <!-- Botón para navegar a la nueva sección de turnos -->
-      <a class="btn-outline" routerLink="/admin/turnos">Ver Turnos</a>
-
-      <!-- +++ INICIO MODIFICACIÓN (Solicitar Turno) +++ -->
-      <!-- Botón para que el Admin solicite un turno -->
-      <a class="btn btn-success" routerLink="/solicitar-turno"> + Solicitar Turno </a>
-      <!-- +++ FIN MODIFICACIÓN +++ -->
-
-      <button class="btn-outline" (click)="exportCsv()">Exportar CSV</button>
-      <button class="btn" (click)="crearNuevoUsuario()">+ Nuevo usuario</button>
-    </div>
-  </div>
-
-  <div class="bulk" *ngIf="selectedCount() > 0">
-    <div>
-      {{ selectedCount() }} seleccionado(s) — Especialistas: {{ selectedSpecialistsCount() }}
-    </div>
-    <div class="bulk__buttons">
-      <button
-        class="btn-small"
-        (click)="bulkHabilitar(true)"
-        [disabled]="selectedSpecialistsCount() === 0"
-      >
-        Habilitar
-      </button>
-      <button
-        class="btn-small"
-        (click)="bulkHabilitar(false)"
-        [disabled]="selectedSpecialistsCount() === 0"
-      >
-        Inhabilitar
-      </button>
-      <button class="btn-outline" (click)="clearSelection()">Quitar selección</button>
-    </div>
-  </div>
-
-  <div class="table" role="table" aria-label="Listado de usuarios">
-    <div class="thead" role="row">
-      <div class="th-check">
-        <input
-          type="checkbox"
-          [checked]="allSelectedOnPage()"
-          (change)="toggleSelectAllPage()"
-          aria-label="Seleccionar todos en la página"
-        />
+        <div class="actions">
+          <button class="btn-outline" (click)="volverABienvenida()">← Volver</button>
+          <a class="btn-outline" routerLink="/admin/turnos">Turnos</a>
+          <button class="btn-outline" (click)="exportExcel()">Excel</button>
+          <button class="btn" (click)="crearNuevoUsuario()">+ Nuevo</button>
+        </div>
       </div>
 
-      <div role="columnheader">Avatar</div>
-      <button role="columnheader" class="th-btn" (click)="toggleSort('nombre')">
-        Nombre
-        <span class="sort" *ngIf="sortKey() === 'nombre'">{{
-          sortDir() === 'asc' ? '▲' : '▼'
-        }}</span>
-      </button>
-      <button role="columnheader" class="th-btn" (click)="toggleSort('rol')">
-        Rol
-        <span class="sort" *ngIf="sortKey() === 'rol'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
-      </button>
-      <button role="columnheader" class="th-btn" (click)="toggleSort('email')">
-        Email
-        <span class="sort" *ngIf="sortKey() === 'email'">{{
-          sortDir() === 'asc' ? '▲' : '▼'
-        }}</span>
-      </button>
-      <button role="columnheader" class="th-btn" (click)="toggleSort('dni')">
-        DNI
-        <span class="sort" *ngIf="sortKey() === 'dni'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
-      </button>
-      <button role="columnheader" class="th-btn" (click)="toggleSort('estado')">
-        Estado
-        <span class="sort" *ngIf="sortKey() === 'estado'">{{
-          sortDir() === 'asc' ? '▲' : '▼'
-        }}</span>
-      </button>
-      <button role="columnheader" class="th-btn" (click)="toggleSort('verif')">
-        Verificación
-        <span class="sort" *ngIf="sortKey() === 'verif'">{{
-          sortDir() === 'asc' ? '▲' : '▼'
-        }}</span>
-      </button>
-      <div role="columnheader">Acciones</div>
-    </div>
-
-    <div class="row" role="row" *ngFor="let u of paged()">
-      <div class="cell check">
-        <input
-          type="checkbox"
-          [checked]="selected().has(u.uid)"
-          (change)="toggleSelect(u.uid)"
-          [attr.aria-label]="'Seleccionar ' + (u.email || u.uid)"
-        />
+      <div class="bulk" *ngIf="selectedCount() > 0">
+        <div>
+          <strong>{{ selectedCount() }}</strong> seleccionados (Esp:
+          {{ selectedSpecialistsCount() }})
+        </div>
+        <div class="bulk__buttons">
+          <button
+            class="btn-small"
+            (click)="bulkHabilitar(true)"
+            [disabled]="selectedSpecialistsCount() === 0"
+          >
+            Habilitar
+          </button>
+          <button
+            class="btn-small"
+            style="background-color: #ef4444"
+            (click)="bulkHabilitar(false)"
+            [disabled]="selectedSpecialistsCount() === 0"
+          >
+            Inhabilitar
+          </button>
+          <button class="btn-outline" style="padding: 0.35rem 0.7rem" (click)="clearSelection()">
+            Cancelar
+          </button>
+        </div>
       </div>
 
-      <div class="cell avatar">
-        <img
-          [src]="u.fotoURL || u.fotoURL1 || u.fotoURL2 || 'assets/avatar-placeholder.png'"
-          alt="Avatar de {{ u.nombre }} {{ u.apellido }}"
-          width="40"
-          height="40"
-        />
-      </div>
-      <div class="cell">{{ u.nombre }} {{ u.apellido }}</div>
-      <div class="cell">{{ u.rol }}</div>
-      <div class="cell">{{ u.email }}</div>
-      <div class="cell">{{ u.dni || '-' }}</div>
-      <div class="cell">
-        <span *ngIf="u.rol !== 'especialista'">—</span>
-        <span *ngIf="u.rol === 'especialista'">{{
-          u.habilitado ? 'Habilitado' : 'Inhabilitado'
-        }}</span>
-      </div>
-      <div class="cell">
-        <span
-          class="badge"
-          [class.badge--ok]="u.emailVerified === true"
-          [class.badge--warn]="!u.emailVerified"
+      <div class="table" role="table" aria-label="Listado de usuarios">
+        <div class="thead" role="row">
+          <div class="th-check">
+            <input
+              type="checkbox"
+              [checked]="allSelectedOnPage()"
+              (change)="toggleSelectAllPage()"
+              aria-label="Seleccionar todos"
+            />
+          </div>
+          <div role="columnheader">Avatar</div>
+
+          <button role="columnheader" class="th-btn" (click)="toggleSort('nombre')">
+            Nombre <span *ngIf="sortKey() === 'nombre'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+          </button>
+
+          <button role="columnheader" class="th-btn" (click)="toggleSort('rol')">
+            Rol <span *ngIf="sortKey() === 'rol'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+          </button>
+
+          <button role="columnheader" class="th-btn" (click)="toggleSort('email')">
+            Email <span *ngIf="sortKey() === 'email'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+          </button>
+
+          <button role="columnheader" class="th-btn th-center" (click)="toggleSort('dni')">
+            DNI <span *ngIf="sortKey() === 'dni'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+          </button>
+
+          <button role="columnheader" class="th-btn th-center" (click)="toggleSort('estado')">
+            Estado <span *ngIf="sortKey() === 'estado'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+          </button>
+
+          <button role="columnheader" class="th-btn th-center" (click)="toggleSort('verif')">
+            Verif. <span *ngIf="sortKey() === 'verif'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+          </button>
+
+          <div role="columnheader" class="th-center">Acciones</div>
+        </div>
+
+        <div
+          class="row"
+          role="row"
+          *ngFor="let u of paged()"
+          (click)="verHistorialPaciente(u)"
+          [class.seleccionable]="u.rol === 'paciente'"
+          [class.activo]="u.uid === pacienteSeleccionado()?.uid"
         >
-          {{ u.emailVerified ? 'Verificado' : 'Sin verificar' }}
-        </span>
+          <div class="cell check">
+            <input
+              type="checkbox"
+              [checked]="selected().has(u.uid)"
+              (change)="toggleSelect(u.uid)"
+              (click)="$event.stopPropagation()"
+            />
+          </div>
+
+          <div class="cell avatar">
+            <img
+              [src]="u.fotoURL || u.fotoURL1 || 'assets/avatar-placeholder.png'"
+              alt="Avatar"
+              width="36"
+              height="36"
+            />
+          </div>
+
+          <div class="cell">
+            <strong>{{ u.nombre }}</strong> {{ u.apellido }}
+          </div>
+          <div class="cell" style="text-transform: capitalize">{{ u.rol }}</div>
+          <div class="cell" title="{{ u.email }}">{{ u.email }}</div>
+
+          <div class="cell center">{{ u.dni || '-' }}</div>
+
+          <div class="cell center">
+            <span *ngIf="u.rol !== 'especialista'" style="color: #cbd5e1">—</span>
+            <span
+              *ngIf="u.rol === 'especialista'"
+              [style.color]="u.habilitado ? '#16a34a' : '#dc2626'"
+              style="font-weight: 600"
+            >
+              {{ u.habilitado ? 'Habilitado' : 'Inhabilitado' }}
+            </span>
+          </div>
+
+          <div class="cell center">
+            <span
+              class="badge"
+              [class.badge--ok]="u.emailVerified"
+              [class.badge--warn]="!u.emailVerified"
+            >
+              {{ u.emailVerified ? 'OK' : 'Pendiente' }}
+            </span>
+          </div>
+
+          <div class="cell actions">
+            <button
+              *ngIf="u.rol === 'especialista'"
+              class="btn-small"
+              [style.background-color]="u.habilitado ? '#dc2626' : '#16a34a'"
+              (click)="$event.stopPropagation(); cambiarEstadoHabilitado(u)"
+            >
+              {{ u.habilitado ? 'Bajar' : 'Alta' }}
+            </button>
+
+            <button *ngIf="u.rol === 'paciente'" class="btn-small btn-historial">
+              {{ pacienteSeleccionado()?.uid === u.uid ? 'Ocultar' : 'Ver H.C.' }}
+            </button>
+          </div>
+        </div>
       </div>
-      <div class="cell actions">
-        <button
-          *ngIf="u.rol === 'especialista'"
-          class="btn-small"
-          (click)="cambiarEstadoHabilitado(u)"
-          [attr.aria-label]="u.habilitado ? 'Inhabilitar especialista' : 'Habilitar especialista'"
-        >
-          {{ u.habilitado ? 'Inhabilitar' : 'Habilitar' }}
-        </button>
+
+      <div class="pagination">
+        <!-- *** ESTA ES LA LÍNEA CLAVE *** -->
+        <!-- Asegúrate de que dice paged().length y total() -->
+        <div class="count">Viendo {{ paged().length }} de {{ total() }}</div>
+
+        <div class="controls">
+          <button class="btn-outline" (click)="prevPage()">Anterior</button>
+          <span>Pag {{ page() }}</span>
+          <button class="btn-outline" (click)="nextPage()">Siguiente</button>
+          <label class="page-size">
+            <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); page.set(1)">
+              <option [ngValue]="5">5</option>
+              <option [ngValue]="10">10</option>
+              <option [ngValue]="20">20</option>
+            </select>
+          </label>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="pagination">
-    <div class="count">Mostrando {{ paged().length }} de {{ total() }}</div>
-    <div class="controls">
-      <button class="btn-outline" (click)="prevPage()">Anterior</button>
-      <span>Página {{ page() }}</span>
-      <button class="btn-outline" (click)="nextPage()">Siguiente</button>
-
-      <label class="page-size">
-        Por página
-        <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); page.set(1)">
-          <option [ngValue]="5">5</option>
-          <option [ngValue]="10">10</option>
-          <option [ngValue]="20">20</option>
-          <option [ngValue]="50">50</option>
-        </select>
-      </label>
+  <div class="detalle-panel-admin">
+    <div *ngIf="!pacienteSeleccionado(); else historial">
+      <div class="estado-simple-admin">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="margin-bottom: 1rem; opacity: 0.5"
+        >
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <p>
+          Selecciona un <strong>paciente</strong> de la lista <br />
+          para ver su historia clínica.
+        </p>
+      </div>
     </div>
+
+    <ng-template #historial>
+      <div *ngIf="pacienteSeleccionado() as p">
+        <div style="display: flex; justify-content: space-between; align-items: start">
+          <h2>H.C. {{ p.nombre }} {{ p.apellido }}</h2>
+          <button
+            class="btn-outline"
+            style="padding: 0.2rem 0.5rem; font-size: 0.8rem"
+            (click)="pacienteSeleccionado.set(null)"
+          >
+            Cerrar
+          </button>
+        </div>
+        <app-historia-clinica [pacienteId]="p.uid"></app-historia-clinica>
+      </div>
+    </ng-template>
   </div>
 </div>

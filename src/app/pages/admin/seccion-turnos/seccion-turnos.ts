@@ -1,3 +1,5 @@
+// seccion-turnos.ts
+// ¡Este archivo no necesita cambios!
 import { Component, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -27,17 +29,14 @@ export class SeccionTurnosComponent {
   private auth = inject(AuthService);
   private turnoService = inject(TurnoService);
   private router = inject(Router);
-  private env = inject(EnvironmentInjector);
+  private env = inject(EnvironmentInjector); // Datos del usuario (para verificar que es admin)
 
-  // Datos del usuario (para verificar que es admin)
   me$: Observable<Usuario | null> = this.auth.me$;
-  turnos$: Observable<Turno[]>;
+  turnos$: Observable<Turno[]>; // Filtro
 
-  // Filtro
   filtro$ = new BehaviorSubject<string>('');
-  filtroInput = '';
+  filtroInput = ''; // Estado del Modal
 
-  // Estado del Modal
   modalVisible = false;
   modalContexto: ModalContexto | null = null;
   turnoSeleccionado: Turno | null = null;
@@ -55,13 +54,12 @@ export class SeccionTurnosComponent {
         }
 
         return runInInjectionContext(this.env, () => {
-          return this.turnoService.getAllTurnos();
+          return this.turnoService.getAllTurnos$();
         });
       })
     );
-  }
+  } // --- Manejo del Filtro ---
 
-  // --- Manejo del Filtro ---
   actualizarFiltro() {
     this.filtro$.next(this.filtroInput);
   }
@@ -69,19 +67,17 @@ export class SeccionTurnosComponent {
     this.filtroInput = '';
     this.actualizarFiltro();
   }
-
   /**
    * Devuelve el link de "vuelta" al panel de usuarios
    */
+
   getVolverLink(): string {
     return '/admin/usuarios';
-  }
-
-  // --- Lógica del Modal ---
-
+  } // --- Lógica del Modal ---
   /**
    * Abre el modal para cancelar un turno
    */
+
   abrirModal(contexto: ModalContexto, turno: Turno) {
     this.modalContexto = contexto;
     this.turnoSeleccionado = turno;
@@ -95,17 +91,16 @@ export class SeccionTurnosComponent {
     this.modalContexto = null;
     this.turnoSeleccionado = null;
   }
-
   /**
    * Confirma la cancelación del turno
    */
+
   async confirmarModal() {
     if (!this.turnoSeleccionado || this.modalContexto !== 'cancelar') return;
 
     const id = this.turnoSeleccionado.id;
-    const comentario = this.comentarioModal.trim();
+    const comentario = this.comentarioModal.trim(); // Validamos que se ingrese un comentario
 
-    // Validamos que se ingrese un comentario
     if (!comentario) {
       this.errorModal = 'Por favor, dejá un comentario para cancelar.';
       return;
@@ -120,9 +115,8 @@ export class SeccionTurnosComponent {
       console.error(e);
       this.errorModal = 'Ocurrió un error al procesar la solicitud.';
     }
-  }
+  } // Helper para el template
 
-  // Helper para el template
   trackByTurnoId(index: number, turno: Turno): string {
     return turno.id;
   }

@@ -1,0 +1,42 @@
+<div class="layout-container">
+  <!-- Columna Izquierda: Lista de Pacientes -->
+  <div class="lista-panel">
+    <h2>Mis Pacientes Atendidos</h2>
+    <div *ngIf="cargando()" class="estado-simple">
+      <div class="spinner"></div>
+      <p>Cargando pacientes...</p>
+    </div>
+
+    <div *ngIf="!cargando() && pacientesAtendidos().length === 0" class="estado-simple">
+      <p>Aún no has finalizado ninguna atención.</p>
+    </div>
+
+    <ul class="paciente-list" *ngIf="!cargando()">
+      <li
+        *ngFor="let paciente of pacientesAtendidos()"
+        (click)="seleccionarPaciente(paciente)"
+        [class.activo]="paciente.uid === pacienteSeleccionado()?.uid"
+      >
+        <img [src]="paciente.fotoURL || 'assets/avatar-placeholder.png'" alt="Avatar" />
+        <span>{{ paciente.nombre }} {{ paciente.apellido }}</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Columna Derecha: Detalle del Paciente -->
+  <div class="detalle-panel">
+    <div *ngIf="!pacienteSeleccionado(); else historial">
+      <div class="estado-simple">
+        <p>Selecciona un paciente de la lista para ver su historia clínica.</p>
+      </div>
+    </div>
+
+    <ng-template #historial>
+      <div *ngIf="pacienteSeleccionado() as p">
+        <h2>Historia Clínica de {{ p.nombre }} {{ p.apellido }}</h2>
+        <!-- Reutilizamos el componente "ladrillo" -->
+        <app-historia-clinica [pacienteId]="p.uid"></app-historia-clinica>
+      </div>
+    </ng-template>
+  </div>
+</div>
