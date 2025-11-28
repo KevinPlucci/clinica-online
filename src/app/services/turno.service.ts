@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, EnvironmentInjector, runInInjectionContext } from '@angular/core';
 import {
   Firestore,
   collection,
@@ -12,7 +12,6 @@ import {
   getDocs,
 } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
-// +++ CAMBIO: Importamos las nuevas interfaces +++
 import { Turno, HistoriaClinica } from '../models/turno';
 
 @Injectable({
@@ -20,30 +19,38 @@ import { Turno, HistoriaClinica } from '../models/turno';
 })
 export class TurnoService {
   private firestore = inject(Firestore);
+  private env = inject(EnvironmentInjector);
   private turnosCol: CollectionReference;
 
   constructor() {
     this.turnosCol = collection(this.firestore, 'turnos');
   }
 
-  // --- Observables (Sin cambios) ---
+  // --- Observables CORREGIDOS ---
+  // AQUI estaba el error. Agregamos runInInjectionContext a los Observables.
 
   getTurnosParaPaciente$(pacienteId: string): Observable<Turno[]> {
-    const q = query(this.turnosCol, where('pacienteId', '==', pacienteId));
-    return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+    return runInInjectionContext(this.env, () => {
+      const q = query(this.turnosCol, where('pacienteId', '==', pacienteId));
+      return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+    });
   }
 
   getTurnosParaEspecialista$(especialistaId: string): Observable<Turno[]> {
-    const q = query(this.turnosCol, where('especialistaId', '==', especialistaId));
-    return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+    return runInInjectionContext(this.env, () => {
+      const q = query(this.turnosCol, where('especialistaId', '==', especialistaId));
+      return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+    });
   }
 
   getAllTurnos$(): Observable<Turno[]> {
-    const q = query(this.turnosCol);
-    return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+    return runInInjectionContext(this.env, () => {
+      const q = query(this.turnosCol);
+      return collectionData(q, { idField: 'id' }) as Observable<Turno[]>;
+    });
   }
 
-  // --- Acciones ---
+  // --- Acciones (Sin cambios, funcionan bien) ---
 
   crearTurno(turno: Omit<Turno, 'id'>): Promise<any> {
     return addDoc(this.turnosCol, turno);
@@ -62,8 +69,6 @@ export class TurnoService {
     return this.updateTurno(id, { estado: 'rechazado', motivoCancelacion: motivo });
   }
 
-  // +++ MODIFICADO +++
-  // Ahora recibe el objeto HistoriaClinica completo
   finalizarTurno(id: string, historia: HistoriaClinica) {
     return this.updateTurno(id, {
       estado: 'realizado',
@@ -83,17 +88,21 @@ export class TurnoService {
     return this.updateTurno(id, { estado: 'cancelado', motivoCancelacion: motivo });
   }
 
-  // --- Funciones Async (Sin cambios) ---
+  // --- Funciones Async (Ya las tenías corregidas en tu versión anterior) ---
 
   async getTurnosParaPaciente(pacienteId: string): Promise<Turno[]> {
-    const q = query(this.turnosCol, where('pacienteId', '==', pacienteId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Turno));
+    return runInInjectionContext(this.env, async () => {
+      const q = query(this.turnosCol, where('pacienteId', '==', pacienteId));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Turno));
+    });
   }
 
   async getTurnosParaEspecialista(especialistaId: string): Promise<Turno[]> {
-    const q = query(this.turnosCol, where('especialistaId', '==', especialistaId));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Turno));
+    return runInInjectionContext(this.env, async () => {
+      const q = query(this.turnosCol, where('especialistaId', '==', especialistaId));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Turno));
+    });
   }
 }

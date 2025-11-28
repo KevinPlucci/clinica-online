@@ -1,0 +1,152 @@
+<div class="informes-container fade-in">
+  <div class="header-section">
+    <h2>Informes y Estadísticas</h2>
+    <div class="tabs">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'logs'"
+        (click)="activeTab.set('logs')"
+      >
+        Logs de Ingreso
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'graficos'"
+        (click)="activeTab.set('graficos')"
+      >
+        Gráficos y Estadísticas
+      </button>
+    </div>
+  </div>
+
+  <!-- SECCIÓN LOGS -->
+  <div class="content-section" *ngIf="activeTab() === 'logs'">
+    <div class="toolbar">
+      <h3>Historial de Ingresos</h3>
+      <button class="btn-excel" (click)="descargarExcelLogs()">📊 Excel</button>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Rol</th>
+            <th>Día y Hora</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let log of logs()" appResaltar>
+            <td>{{ log.usuario }}</td>
+            <td>
+              <span class="badge" [ngClass]="log.rol">{{ log.rol }}</span>
+            </td>
+            <td>
+              <span style="font-weight: 600; color: #475569">
+                {{ log.fecha | diaSemana }}
+              </span>
+              - {{ log.fecha?.toDate() | date : 'dd/MM/yyyy HH:mm' }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECCIÓN GRÁFICOS -->
+  <div class="content-section" *ngIf="activeTab() === 'graficos'">
+    <div class="toolbar">
+      <div class="dates">
+        <label
+          >Desde: <input type="date" [(ngModel)]="fechaDesde" (change)="actualizarGraficos()"
+        /></label>
+        <label
+          >Hasta: <input type="date" [(ngModel)]="fechaHasta" (change)="actualizarGraficos()"
+        /></label>
+      </div>
+      <button class="btn-pdf" (click)="descargarPDFGraficos()">📄 PDF</button>
+    </div>
+
+    <!-- ID para capturar el PDF -->
+    <div id="charts-printable" class="grid-graficos">
+      <!-- 1. Torta (SVG) -->
+      <div class="card-grafico">
+        <h4 appAgrandar>Turnos por Especialidad</h4>
+
+        <div class="chart-layout">
+          <!-- Círculo SVG -->
+          <div class="pie-chart-container">
+            <!-- Si no hay datos, mostramos un círculo gris -->
+            <div *ngIf="chartEspecialidades.length === 0" class="empty-pie">Sin datos</div>
+
+            <svg viewBox="-1 -1 2 2" class="pie-svg" *ngIf="chartEspecialidades.length > 0">
+              <path
+                *ngFor="let slice of chartEspecialidades"
+                [attr.d]="slice.path"
+                [attr.fill]="slice.color"
+                stroke="white"
+                stroke-width="0.02"
+              ></path>
+            </svg>
+          </div>
+
+          <!-- Leyenda -->
+          <div class="legend">
+            <div *ngFor="let item of chartEspecialidades" class="legend-item">
+              <span class="dot" [style.background]="item.color"></span>
+              <span>{{ item.label }} ({{ item.value }})</span>
+            </div>
+            <div *ngIf="chartEspecialidades.length === 0" class="no-data-text">
+              No hay turnos registrados.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Barras (CSS) - Turnos por Día -->
+      <div class="card-grafico">
+        <h4 appAgrandar>Turnos por Día</h4>
+        <div class="bar-chart">
+          <div *ngFor="let item of chartDias" class="bar-group">
+            <div class="bar" [style.height.%]="item.height" [style.background]="item.color">
+              <span class="bar-value" *ngIf="item.value > 0">{{ item.value }}</span>
+            </div>
+            <span class="bar-label">{{ item.label.slice(0, 3) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Solicitados -->
+      <div class="card-grafico full-width">
+        <h4 appAgrandar>Solicitados por Médico</h4>
+        <div class="bar-chart">
+          <div *ngFor="let item of chartMedicosSolicitados" class="bar-group">
+            <div class="bar" [style.height.%]="item.height" [style.background]="item.color">
+              <span class="bar-value" *ngIf="item.value > 0">{{ item.value }}</span>
+            </div>
+            <span class="bar-label">{{ item.label | doctor }}</span>
+          </div>
+          <div *ngIf="chartMedicosSolicitados.length === 0" class="no-data-text">
+            No hay datos en este rango de fechas.
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Finalizados -->
+      <div class="card-grafico full-width">
+        <h4 appAgrandar>Finalizados por Médico</h4>
+        <div class="bar-chart">
+          <div *ngFor="let item of chartMedicosFinalizados" class="bar-group">
+            <div class="bar" [style.height.%]="item.height" [style.background]="item.color">
+              <span class="bar-value" *ngIf="item.value > 0">{{ item.value }}</span>
+            </div>
+            <span class="bar-label">{{ item.label | doctor }}</span>
+          </div>
+          <div *ngIf="chartMedicosFinalizados.length === 0" class="no-data-text">
+            No hay datos en este rango de fechas.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

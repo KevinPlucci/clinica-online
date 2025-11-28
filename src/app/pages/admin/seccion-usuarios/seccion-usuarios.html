@@ -33,8 +33,23 @@
 
         <div class="actions">
           <button class="btn-outline" (click)="volverABienvenida()">← Volver</button>
+
+          <button class="btn-outline" (click)="toggleVista()">
+            {{ vista() === 'tabla' ? '⊞ Ver Tarjetas' : '≡ Ver Lista' }}
+          </button>
+
           <a class="btn-outline" routerLink="/admin/turnos">Turnos</a>
-          <button class="btn-outline" (click)="exportExcel()">Excel</button>
+
+          <!-- BOTÓN DE INFORMES -->
+          <a
+            class="btn-outline"
+            routerLink="/admin/informes"
+            style="border-color: #2563eb; color: #2563eb; font-weight: bold"
+          >
+            📊 Informes
+          </a>
+
+          <button class="btn-outline" (click)="exportExcel()">Excel Gral.</button>
           <button class="btn" (click)="crearNuevoUsuario()">+ Nuevo</button>
         </div>
       </div>
@@ -66,42 +81,33 @@
         </div>
       </div>
 
-      <div class="table" role="table" aria-label="Listado de usuarios">
+      <!-- VISTA TABLA -->
+      <div class="table" role="table" *ngIf="vista() === 'tabla'">
         <div class="thead" role="row">
           <div class="th-check">
             <input
               type="checkbox"
               [checked]="allSelectedOnPage()"
               (change)="toggleSelectAllPage()"
-              aria-label="Seleccionar todos"
             />
           </div>
           <div role="columnheader">Avatar</div>
-
           <button role="columnheader" class="th-btn" (click)="toggleSort('nombre')">
             Nombre <span *ngIf="sortKey() === 'nombre'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
           </button>
-
           <button role="columnheader" class="th-btn" (click)="toggleSort('rol')">
             Rol <span *ngIf="sortKey() === 'rol'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
           </button>
-
-          <button role="columnheader" class="th-btn" (click)="toggleSort('email')">
-            Email <span *ngIf="sortKey() === 'email'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
-          </button>
-
+          <button role="columnheader" class="th-btn" (click)="toggleSort('email')">Email</button>
           <button role="columnheader" class="th-btn th-center" (click)="toggleSort('dni')">
-            DNI <span *ngIf="sortKey() === 'dni'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            DNI
           </button>
-
           <button role="columnheader" class="th-btn th-center" (click)="toggleSort('estado')">
-            Estado <span *ngIf="sortKey() === 'estado'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            Estado
           </button>
-
           <button role="columnheader" class="th-btn th-center" (click)="toggleSort('verif')">
-            Verif. <span *ngIf="sortKey() === 'verif'">{{ sortDir() === 'asc' ? '▲' : '▼' }}</span>
+            Verif.
           </button>
-
           <div role="columnheader" class="th-center">Acciones</div>
         </div>
 
@@ -121,7 +127,6 @@
               (click)="$event.stopPropagation()"
             />
           </div>
-
           <div class="cell avatar">
             <img
               [src]="u.fotoURL || u.fotoURL1 || 'assets/avatar-placeholder.png'"
@@ -130,15 +135,12 @@
               height="36"
             />
           </div>
-
           <div class="cell">
             <strong>{{ u.nombre }}</strong> {{ u.apellido }}
           </div>
           <div class="cell" style="text-transform: capitalize">{{ u.rol }}</div>
           <div class="cell" title="{{ u.email }}">{{ u.email }}</div>
-
           <div class="cell center">{{ u.dni || '-' }}</div>
-
           <div class="cell center">
             <span *ngIf="u.rol !== 'especialista'" style="color: #cbd5e1">—</span>
             <span
@@ -149,7 +151,6 @@
               {{ u.habilitado ? 'Habilitado' : 'Inhabilitado' }}
             </span>
           </div>
-
           <div class="cell center">
             <span
               class="badge"
@@ -159,7 +160,6 @@
               {{ u.emailVerified ? 'OK' : 'Pendiente' }}
             </span>
           </div>
-
           <div class="cell actions">
             <button
               *ngIf="u.rol === 'especialista'"
@@ -169,7 +169,6 @@
             >
               {{ u.habilitado ? 'Bajar' : 'Alta' }}
             </button>
-
             <button *ngIf="u.rol === 'paciente'" class="btn-small btn-historial">
               {{ pacienteSeleccionado()?.uid === u.uid ? 'Ocultar' : 'Ver H.C.' }}
             </button>
@@ -177,11 +176,66 @@
         </div>
       </div>
 
-      <div class="pagination">
-        <!-- *** ESTA ES LA LÍNEA CLAVE *** -->
-        <!-- Asegúrate de que dice paged().length y total() -->
-        <div class="count">Viendo {{ paged().length }} de {{ total() }}</div>
+      <!-- VISTA TARJETAS -->
+      <div class="grid-cards" *ngIf="vista() === 'tarjetas'">
+        <div
+          class="user-card"
+          *ngFor="let u of paged()"
+          [class.paciente-card]="u.rol === 'paciente'"
+          (click)="verHistorialPaciente(u)"
+        >
+          <div class="card-header">
+            <img [src]="u.fotoURL || u.fotoURL1 || 'assets/avatar-placeholder.png'" alt="Avatar" />
+            <div class="card-info">
+              <h3>{{ u.nombre }} {{ u.apellido }}</h3>
+              <span class="badge-card" [ngClass]="u.rol">{{ u.rol }}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <p><strong>DNI:</strong> {{ u.dni || '-' }}</p>
+            <p><strong>Email:</strong> {{ u.email }}</p>
+            <p>
+              <strong>Estado:</strong>
+              <span
+                [style.color]="u.rol === 'especialista' ? (u.habilitado ? 'green' : 'red') : 'gray'"
+              >
+                {{
+                  u.rol === 'especialista'
+                    ? u.habilitado
+                      ? 'Habilitado'
+                      : 'Inhabilitado'
+                    : 'Activo'
+                }}
+              </span>
+            </p>
+          </div>
+          <div class="card-actions">
+            <!-- Botón Excel Individual -->
+            <button
+              *ngIf="u.rol === 'paciente'"
+              class="btn-small"
+              style="background: #10b981"
+              (click)="$event.stopPropagation(); descargarExcelUsuario(u)"
+            >
+              📊 Excel Turnos
+            </button>
+            <button *ngIf="u.rol === 'paciente'" class="btn-small btn-historial">
+              {{ pacienteSeleccionado()?.uid === u.uid ? 'Ocultar' : 'Ver H.C.' }}
+            </button>
+            <button
+              *ngIf="u.rol === 'especialista'"
+              class="btn-small"
+              [style.background-color]="u.habilitado ? '#dc2626' : '#16a34a'"
+              (click)="$event.stopPropagation(); cambiarEstadoHabilitado(u)"
+            >
+              {{ u.habilitado ? 'Inhabilitar' : 'Habilitar' }}
+            </button>
+          </div>
+        </div>
+      </div>
 
+      <div class="pagination">
+        <div class="count">Viendo {{ paged().length }} de {{ total() }}</div>
         <div class="controls">
           <button class="btn-outline" (click)="prevPage()">Anterior</button>
           <span>Pag {{ page() }}</span>

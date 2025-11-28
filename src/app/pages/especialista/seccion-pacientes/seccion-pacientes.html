@@ -1,41 +1,84 @@
 <div class="layout-container">
-  <!-- Columna Izquierda: Lista de Pacientes -->
+  <!-- PANEL IZQUIERDO: FAVBUTTONS (GRID) -->
   <div class="lista-panel">
-    <h2>Mis Pacientes Atendidos</h2>
-    <div *ngIf="cargando()" class="estado-simple">
-      <div class="spinner"></div>
+    <h2>Mis Pacientes</h2>
+
+    <div *ngIf="spinner.isLoading | async" class="estado-simple">
       <p>Cargando pacientes...</p>
     </div>
 
-    <div *ngIf="!cargando() && pacientesAtendidos().length === 0" class="estado-simple">
+    <div *ngIf="!(spinner.isLoading | async) && pacientes().length === 0" class="estado-simple">
       <p>Aún no has finalizado ninguna atención.</p>
     </div>
 
-    <ul class="paciente-list" *ngIf="!cargando()">
-      <li
-        *ngFor="let paciente of pacientesAtendidos()"
-        (click)="seleccionarPaciente(paciente)"
-        [class.activo]="paciente.uid === pacienteSeleccionado()?.uid"
+    <!-- Reemplazamos la lista <ul> por un contenedor GRID para los botones redondos -->
+    <div class="grid-pacientes" *ngIf="!(spinner.isLoading | async)">
+      <div
+        class="paciente-favbutton"
+        *ngFor="let p of pacientes()"
+        (click)="seleccionarPaciente(p)"
+        [class.active]="pacienteSeleccionado()?.uid === p.uid"
       >
-        <img [src]="paciente.fotoURL || 'assets/avatar-placeholder.png'" alt="Avatar" />
-        <span>{{ paciente.nombre }} {{ paciente.apellido }}</span>
-      </li>
-    </ul>
+        <!-- Imagen Redonda Grande -->
+        <img [src]="p.fotoURL || 'assets/avatar-placeholder.png'" alt="Avatar" />
+
+        <!-- Nombre debajo -->
+        <div class="info-fav">
+          <span class="nombre">{{ p.nombre }}</span>
+          <span class="apellido">{{ p.apellido }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Columna Derecha: Detalle del Paciente -->
+  <!-- PANEL DERECHO: DETALLE + RESEÑAS -->
   <div class="detalle-panel">
-    <div *ngIf="!pacienteSeleccionado(); else historial">
-      <div class="estado-simple">
-        <p>Selecciona un paciente de la lista para ver su historia clínica.</p>
+    <div *ngIf="!pacienteSeleccionado(); else detalleTemplate">
+      <div class="estado-simple-grande">
+        <span style="font-size: 3rem; opacity: 0.2">👈</span>
+        <p>Selecciona un paciente para ver<br />su Historia Clínica y Reseñas.</p>
       </div>
     </div>
 
-    <ng-template #historial>
-      <div *ngIf="pacienteSeleccionado() as p">
-        <h2>Historia Clínica de {{ p.nombre }} {{ p.apellido }}</h2>
-        <!-- Reutilizamos el componente "ladrillo" -->
-        <app-historia-clinica [pacienteId]="p.uid"></app-historia-clinica>
+    <ng-template #detalleTemplate>
+      <div *ngIf="pacienteSeleccionado() as p" class="contenido-detalle fade-in">
+        <div class="header-detalle">
+          <h2>{{ p.nombre }} {{ p.apellido }}</h2>
+          <button class="btn-close" (click)="seleccionarPaciente(p)">Cerrar ✖</button>
+        </div>
+
+        <!-- 1. Historia Clínica (Componente Reutilizable) -->
+        <div class="seccion-hc">
+          <h3>Historia Clínica</h3>
+          <app-historia-clinica [pacienteId]="p.uid"></app-historia-clinica>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- 2. Reseñas de cada consulta (Requisito Nuevo) -->
+        <div class="seccion-resenas">
+          <h3>Reseñas de mis consultas</h3>
+
+          <div class="cards-grid">
+            <div class="card-resena" *ngFor="let t of turnosConElPaciente()">
+              <div class="card-header">
+                <span class="fecha">{{ t.fecha.toDate() | date : 'dd/MM/yyyy HH:mm' }}</span>
+                <span class="especialidad">{{ t.especialidad }}</span>
+              </div>
+              <div class="card-body">
+                <p class="comentario">"{{ t.comentario || 'Sin comentario' }}"</p>
+                <div class="datos-extra" *ngIf="t.historiaClinica as hc">
+                  <span class="badge">Peso: {{ hc.peso }}kg</span>
+                  <span class="badge">Altura: {{ hc.altura }}cm</span>
+                </div>
+              </div>
+            </div>
+
+            <div *ngIf="turnosConElPaciente().length === 0" class="no-resenas">
+              No hay reseñas disponibles.
+            </div>
+          </div>
+        </div>
       </div>
     </ng-template>
   </div>

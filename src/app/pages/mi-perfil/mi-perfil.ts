@@ -1,34 +1,20 @@
-import {
-  Component,
-  inject,
-  signal,
-  effect,
-  WritableSignal,
-  runInInjectionContext,
-  EnvironmentInjector,
-} from '@angular/core';
+import { Component, inject, signal, EnvironmentInjector, WritableSignal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import jsPDF from 'jspdf';
-
-// Modelos y Servicios
 import { Usuario, HorarioConfig } from '../../models/usuario';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { TurnoService } from '../../services/turno.service';
-
-// +++ 1. IMPORTAR EL COMPONENTE NUEVO +++
 import { HistoriaClinicaComponent } from '../../shared/historia-clinica/historia-clinica';
 
-// Tipo local para el formulario
 type HorarioForm = WritableSignal<HorarioConfig>;
 
 @Component({
   selector: 'app-mi-perfil',
   standalone: true,
-  // +++ 2. AGREGAR EL COMPONENTE A LOS IMPORTS +++
   imports: [CommonModule, RouterLink, FormsModule, HistoriaClinicaComponent],
   templateUrl: './mi-perfil.html',
   styleUrls: ['./mi-perfil.scss'],
@@ -46,7 +32,10 @@ export class MiPerfilComponent {
   mensaje = signal<string | null>(null);
   descargandoPdf = signal<boolean>(false);
 
-  // Días de la semana para el <select>
+  // +++ NUEVAS SEÑALES PARA FILTRO DE PROFESIONAL +++
+  especialistasVisitados = signal<string[]>([]);
+  especialistaSeleccionado = signal<string>('');
+
   diasSemana = [
     { id: 1, nombre: 'Lunes' },
     { id: 2, nombre: 'Martes' },
@@ -64,18 +53,106 @@ export class MiPerfilComponent {
 
   async cargarDatosUsuario() {
     this.cargando.set(true);
-    // +++ MODIFICADO: Usar el servicio de usuario en lugar de auth.me$ +++
-    // (Asumiendo que auth.me$ solo da el user de auth, y necesitamos el de la BBDD)
     const authUser = await firstValueFrom(this.auth.me$);
     if (authUser) {
-      // Usamos getUsuario (Observable) con firstValueFrom
       const user = await firstValueFrom(this.usuarioService.getUsuario(authUser.uid));
       this.me.set(user);
-      if (user && user.rol === 'especialista' && user.especialidades) {
-        this.inicializarHorariosMap(user);
+      if (user) {
+        if (user.rol === 'especialista' && user.especialidades) {
+          this.inicializarHorariosMap(user);
+        }
+        // +++ CARGAR ESPECIALISTAS SI ES PACIENTE +++
+        if (user.rol === 'paciente') {
+          this.cargarEspecialistasVisitados(user.uid);
+        }
       }
     }
     this.cargando.set(false);
+  }
+
+  // +++ LÓGICA DE FILTRO PROFESIONAL +++
+  async cargarEspecialistasVisitados(uid: string) {
+    try {
+      const turnos = await this.turnoService.getTurnosParaPaciente(uid);
+      const nombres = new Set<string>();
+      turnos.forEach((t) => {
+        if (t.estado === 'realizado') {
+          nombres.add(t.especialistaNombre);
+        }
+      });
+      this.especialistasVisitados.set(Array.from(nombres));
+    } catch (e) {
+      console.error('Error cargando especialistas', e);
+    }
+  }
+
+  async descargarAtencionesPorProfesional() {
+    const prof = this.especialistaSeleccionado();
+    if (!prof) return;
+
+    const user = this.me()!;
+    this.descargandoPdf.set(true);
+
+    try {
+      const turnos = await this.turnoService.getTurnosParaPaciente(user.uid);
+      // Filtramos por estado Y por nombre del especialista
+      const filtrados = turnos.filter(
+        (t) => t.estado === 'realizado' && t.especialistaNombre === prof
+      );
+
+      const doc = new jsPDF();
+
+      // LOGO Y CABECERA (Reutilizado)
+      try {
+        const logoBase64 = await this.getBase64Image('assets/logo-clinica.png');
+        doc.addImage(logoBase64, 'PNG', 14, 15, 40, 15);
+      } catch {
+        doc.setFontSize(22);
+        doc.setTextColor(30, 58, 138);
+        doc.text('Clínica Online', 14, 20);
+      }
+
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Fecha: ${new Date().toLocaleDateString()}`, 140, 20);
+
+      doc.setFontSize(16);
+      doc.setTextColor(0);
+      doc.text(`Reporte de Atenciones: ${prof}`, 14, 45);
+
+      doc.setFontSize(12);
+      doc.text(`Paciente: ${user.nombre} ${user.apellido}`, 14, 55);
+
+      let y = 70;
+      doc.setLineWidth(0.5);
+      doc.line(14, 65, 200, 65);
+
+      if (filtrados.length === 0) {
+        doc.text('No se encontraron atenciones finalizadas con este profesional.', 14, y);
+      } else {
+        filtrados.forEach((t) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          const fecha = t.fecha.toDate().toLocaleString();
+          doc.setFont('helvetica', 'bold');
+          doc.text(`${fecha} - ${t.especialidad}`, 14, y);
+          y += 7;
+          doc.setFont('helvetica', 'normal');
+          const reseña = doc.splitTextToSize(`Reseña: ${t.comentario || '-'}`, 180);
+          doc.text(reseña, 14, y);
+          y += reseña.length * 7 + 10;
+        });
+      }
+
+      doc.save(`atenciones_${prof.replace(/\s/g, '_')}.pdf`);
+    } catch (e) {
+      console.error(e);
+      this.mensaje.set('Error al generar PDF filtrado');
+    } finally {
+      this.descargandoPdf.set(false);
+    }
   }
 
   inicializarHorariosMap(user: Usuario) {
@@ -90,11 +167,7 @@ export class MiPerfilComponent {
   addHorario(especialidad: string) {
     const horarios = this.horariosMap.get(especialidad);
     if (horarios) {
-      horarios.push({
-        dia: 1,
-        desde: '09:00',
-        hasta: '17:00',
-      });
+      horarios.push({ dia: 1, desde: '09:00', hasta: '17:00' });
     }
   }
 
@@ -108,10 +181,8 @@ export class MiPerfilComponent {
   async guardarHorarios() {
     const user = this.me();
     if (!user || user.rol !== 'especialista') return;
-
     this.cargando.set(true);
     this.mensaje.set(null);
-
     try {
       await this.usuarioService.guardarHorariosDisponibles(user.uid, this.horariosMap);
       this.mensaje.set('¡Horarios guardados con éxito!');
@@ -148,16 +219,10 @@ export class MiPerfilComponent {
   async descargarHistoriaClinica() {
     const user = this.me();
     if (!user || user.rol !== 'paciente') return;
-
     this.descargandoPdf.set(true);
     try {
-      // +++ MODIFICADO: Usar la nueva función async del servicio +++
       const historial = await this.turnoService.getTurnosParaPaciente(user.uid);
-      // El filtro de 'realizado' ya no es necesario aquí si la función async lo hace,
-      // pero nuestra nueva función async NO lo hace. La de PeticionesPDF sí lo hacía.
-      // Lo agregamos aquí para seguridad.
       const historialFiltrado = historial.filter((t) => t.estado === 'realizado');
-
       const doc = new jsPDF();
       const fechaEmision = new Date().toLocaleDateString();
 
@@ -165,7 +230,6 @@ export class MiPerfilComponent {
         const logoBase64 = await this.getBase64Image('assets/logo-clinica.png');
         doc.addImage(logoBase64, 'PNG', 14, 15, 40, 15);
       } catch (imgError) {
-        console.error('No se pudo cargar el logo, se usará texto como fallback.', imgError);
         doc.setFontSize(22);
         doc.setTextColor(30, 58, 138);
         doc.text('Clínica Online', 14, 20);
@@ -174,11 +238,9 @@ export class MiPerfilComponent {
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text(`Fecha de emisión: ${fechaEmision}`, 140, 20);
-
       doc.setFontSize(18);
       doc.setTextColor(0);
       doc.text('Historia Clínica', 14, 45);
-
       doc.setFontSize(12);
       doc.text(`Paciente: ${user.nombre} ${user.apellido}`, 14, 55);
       doc.text(`DNI: ${user.dni}`, 14, 62);

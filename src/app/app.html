@@ -1,5 +1,5 @@
-<!-- Agregamos [@fadeAnimation] para activar la transición -->
-<div [@fadeAnimation]="o.isActivated ? o.activatedRoute : ''">
+<div [@slideInAnimation]="prepareRoute(o)">
   <router-outlet #o="outlet"></router-outlet>
 </div>
+
 <app-spinner *ngIf="spinnerSvc.isLoading | async"></app-spinner>

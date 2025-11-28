@@ -8,9 +8,10 @@ import { Router, RouterLink } from '@angular/router';
 import { ToastService } from '../../../shared/toast.service';
 import { ToastsComponent } from '../../../shared/toasts/toasts';
 import * as XLSX from 'xlsx';
-
-// 1. IMPORTAR EL COMPONENTE DE HISTORIA CLÍNICA
 import { HistoriaClinicaComponent } from '../../../shared/historia-clinica/historia-clinica';
+
+// +++ IMPORTAMOS SERVICIO DE TURNOS PARA EL EXCEL INDIVIDUAL +++
+import { TurnoService } from '../../../services/turno.service';
 
 type RolFiltro = 'all' | 'admin' | 'paciente' | 'especialista';
 type EstadoFiltro = 'all' | 'habilitado' | 'inhabilitado';
@@ -20,19 +21,21 @@ type SortKey = 'nombre' | 'rol' | 'email' | 'dni' | 'estado' | 'verif';
 @Component({
   selector: 'app-seccion-usuarios',
   standalone: true,
-  // 2. AGREGAR 'HistoriaClinicaComponent' A LOS IMPORTS
   imports: [CommonModule, FormsModule, ToastsComponent, RouterLink, HistoriaClinicaComponent],
   templateUrl: './seccion-usuarios.html',
   styleUrls: ['./seccion-usuarios.scss'],
 })
 export class SeccionUsuariosComponent implements OnInit {
   private usuarioService = inject(UsuarioService);
+  private turnoService = inject(TurnoService); // <--- INYECCIÓN
   private spinner = inject(SpinnerService);
   private router = inject(Router);
   private toasts = inject(ToastService);
 
-  // 3. SEÑAL PARA EL PACIENTE SELECCIONADO
   pacienteSeleccionado = signal<Usuario | null>(null);
+
+  // --- Señal para alternar vista ---
+  vista = signal<'tabla' | 'tarjetas'>('tabla');
 
   // --- Señales de estado ---
   usuarios = signal<Usuario[]>([]);
@@ -49,7 +52,7 @@ export class SeccionUsuariosComponent implements OnInit {
 
   selected = signal<Set<string>>(new Set());
 
-  // --- Señales Computadas (Selección) ---
+  // --- Señales Computadas ---
   allSelectedOnPage = computed(() => this.paged().every((u) => this.selected().has(u.uid)));
   selectedCount = computed(() => this.selected().size);
   selectedSpecialists = computed(() =>
@@ -57,9 +60,6 @@ export class SeccionUsuariosComponent implements OnInit {
   );
   selectedSpecialistsCount = computed(() => this.selectedSpecialists().length);
 
-  // --- Señales Computadas (Datos) ---
-
-  // 1. Filtra la lista base de usuarios
   filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
     const rf = this.rol(),
@@ -81,11 +81,10 @@ export class SeccionUsuariosComponent implements OnInit {
     });
   });
 
-  // 2. Ordena la lista filtrada
   sorted = computed(() => {
     const key = this.sortKey(),
       dir = this.sortDir();
-    const list = [...this.filtered()]; // Trabaja sobre la lista filtrada
+    const list = [...this.filtered()];
     const cmp = (a: any, b: any) => (a < b ? -1 : a > b ? 1 : 0);
     list.sort((a, b) => {
       let av: any, bv: any;
@@ -122,7 +121,6 @@ export class SeccionUsuariosComponent implements OnInit {
           break;
         case 'verif':
           av = (a as any).emailVerified ? 'verificado' : 'noverificado';
-          // +++ ESTA ES LA LÍNEA CORREGIDA +++
           bv = (b as any).emailVerified ? 'verificado' : 'noverificado';
           break;
       }
@@ -132,19 +130,16 @@ export class SeccionUsuariosComponent implements OnInit {
     return list;
   });
 
-  // 3. Pagina la lista ordenada
   paged = computed(() => {
     const p = this.page(),
       ps = this.pageSize();
     const start = (p - 1) * ps;
-    return this.sorted().slice(start, start + ps); // Trabaja sobre la lista ordenada
+    return this.sorted().slice(start, start + ps);
   });
 
-  // 4. El total se basa en 'filtered()', NO en 'paged()'.
   total = computed(() => this.filtered().length);
 
   constructor() {
-    // Resetea la página a 1 si cualquier filtro cambia
     effect(() => {
       this.query();
       this.rol();
@@ -156,6 +151,10 @@ export class SeccionUsuariosComponent implements OnInit {
 
   ngOnInit(): void {
     this.cargarUsuarios();
+  }
+
+  toggleVista() {
+    this.vista.update((v) => (v === 'tabla' ? 'tarjetas' : 'tabla'));
   }
 
   async cargarUsuarios() {
@@ -174,7 +173,6 @@ export class SeccionUsuariosComponent implements OnInit {
   crearNuevoUsuario() {
     this.router.navigate(['/admin/usuarios/nuevo']);
   }
-
   volverABienvenida() {
     this.router.navigate(['/bienvenida']);
   }
@@ -214,36 +212,28 @@ export class SeccionUsuariosComponent implements OnInit {
       this.toasts.info('No hay especialistas seleccionados');
       return;
     }
-
-    // NOTA: Reemplaza window.confirm con un modal si es posible
-    const verbo = habilitar ? 'habilitar' : 'inhabilitar';
-    // const ok = window.confirm(`¿Confirmás ${verbo} ${items.length} especialista(s) seleccionados?`);
-    // if (!ok) return;
-
     this.spinner.show();
     let okCount = 0,
       failCount = 0;
     for (const u of items) {
       try {
         await this.usuarioService.updateHabilitado(u.uid, habilitar);
-        u.habilitado = habilitar; // Actualiza el estado local
+        u.habilitado = habilitar;
         okCount++;
       } catch {
         failCount++;
       }
     }
     this.spinner.hide();
-    this.toasts.success(
-      `${okCount} especialista(s) ${habilitar ? 'habilitados' : 'inhabilitados'} correctamente`
-    );
-    if (failCount > 0) this.toasts.warning(`${failCount} no pudieron actualizarse`);
+    this.toasts.success(`${okCount} especialistas actualizados`);
+    if (failCount > 0) this.toasts.warning(`${failCount} fallaron`);
     this.clearSelection();
   }
 
   exportExcel() {
-    const rows = this.filtered(); // Exporta TODOS los filtrados, no solo la página
+    const rows = this.filtered();
     if (rows.length === 0) {
-      this.toasts.info('No hay datos para exportar');
+      this.toasts.info('No hay datos');
       return;
     }
     const data = rows.map((u) => ({
@@ -259,31 +249,54 @@ export class SeccionUsuariosComponent implements OnInit {
     const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Usuarios');
-    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-    XLSX.writeFile(wb, `usuarios_clinica_${stamp}.xlsx`);
-    this.toasts.success(`Exportado a Excel ${rows.length} registro(s)`);
+    XLSX.writeFile(wb, `usuarios_general_${new Date().getTime()}.xlsx`);
+    this.toasts.success(`Excel general exportado`);
+  }
+
+  // +++ NUEVA FUNCIÓN: Descargar Excel de un usuario específico +++
+  async descargarExcelUsuario(u: Usuario) {
+    if (u.rol !== 'paciente') {
+      this.toasts.info('Solo disponible para pacientes');
+      return;
+    }
+    this.spinner.show();
+    try {
+      const turnos = await this.turnoService.getTurnosParaPaciente(u.uid);
+      if (turnos.length === 0) {
+        this.toasts.info(`El paciente ${u.nombre} no tiene turnos.`);
+        this.spinner.hide();
+        return;
+      }
+      const data = turnos.map((t) => ({
+        Fecha: t.fecha.toDate().toLocaleString(),
+        Especialidad: t.especialidad,
+        Especialista: t.especialistaNombre,
+        Estado: t.estado,
+        Reseña: t.comentario || '-',
+      }));
+      const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(data);
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Turnos Paciente');
+      XLSX.writeFile(wb, `turnos_${u.apellido}_${u.nombre}.xlsx`);
+      this.toasts.success(`Excel de ${u.nombre} descargado`);
+    } catch (e) {
+      console.error(e);
+      this.toasts.error('Error al generar Excel');
+    } finally {
+      this.spinner.hide();
+    }
   }
 
   async cambiarEstadoHabilitado(u: Usuario) {
     if (u.rol !== 'especialista') return;
-    const target = u.habilitado !== false ? 'inhabilitar' : 'habilitar';
-
-    // NOTA: Reemplaza window.confirm con un modal si es posible
-    // const ok = window.confirm(
-    //   `¿Confirmás ${target} al especialista "${u.nombre ?? ''} ${u.apellido ?? ''}"?`
-    // );
-    // if (!ok) return;
-
     this.spinner.show();
     try {
       await this.usuarioService.updateHabilitado(u.uid, !(u.habilitado !== false));
-      u.habilitado = !(u.habilitado !== false); // Actualiza el estado local
-      this.toasts.success(
-        `Especialista ${u.habilitado ? 'habilitado' : 'inhabilitado'} correctamente`
-      );
+      u.habilitado = !(u.habilitado !== false);
+      this.toasts.success(`Estado actualizado`);
     } catch (e: any) {
       console.error(e);
-      this.toasts.error(e?.message || 'No se pudo actualizar el estado');
+      this.toasts.error('Error al actualizar');
     } finally {
       this.spinner.hide();
     }
@@ -292,13 +305,11 @@ export class SeccionUsuariosComponent implements OnInit {
   prevPage() {
     if (this.page() > 1) this.page.update((p) => p - 1);
   }
-
   nextPage() {
     const pages = Math.max(1, Math.ceil(this.total() / this.pageSize()));
     if (this.page() < pages) this.page.update((p) => p + 1);
   }
 
-  // 4. NUEVA FUNCIÓN PARA SELECCIONAR PACIENTE (Y VER HISTORIAL)
   verHistorialPaciente(u: Usuario) {
     if (u.rol !== 'paciente') {
       this.pacienteSeleccionado.set(null);

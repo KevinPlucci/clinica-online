@@ -1,351 +1,248 @@
-/* +++ INICIO MODIFICACIÓN (Fondo de Pantalla) +++ */
-/* Aplicamos el fondo a toda la página del componente */
-:host {
-  display: block; // Asegura que el host ocupe espacio
-  min-height: 100vh; // Ocupa toda la altura
-  padding: 2rem; // Espacio en bordes (móvil)
-  box-sizing: border-box;
+/* src/app/pages/mi-perfil/mi-perfil.scss */
 
-  /* La ruta sube 4 niveles: mi-perfil -> pages -> app -> src */
+:host {
+  display: block;
+  min-height: 100vh;
+  padding: 2rem;
+  box-sizing: border-box;
+  /* Ruta al fondo de pantalla */
   background-image: url('../../../assets/fondo_de_pantalla.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
 
-/* El contenedor principal ahora es el wrapper para centrar la tarjeta */
+/* Contenedor principal para centrar la tarjeta */
 .perfil-container {
-  padding: 0;
-  font-family: sans-serif;
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  width: 100%;
+  padding-bottom: 2rem;
 }
-/* +++ FIN MODIFICACIÓN +++ */
 
-
-/* +++ MODIFICACIÓN: Esta es ahora nuestra "tarjeta" flotante +++ */
+/* La Tarjeta Blanca */
 .perfil-card {
   background: rgba(255, 255, 255, 0.98);
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-
-  /* +++ MODIFICACIÓN: El padding ahora está adentro +++ */
-  padding: 0; // Lo quitamos para que el header ocupe todo
-  overflow: hidden; // Para que el header respete el border-radius
-
-  max-width: 900px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   width: 100%;
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+  max-width: 850px; /* Ancho máximo prolijo */
+  overflow: hidden; /* Para que nada se salga de los bordes redondeados */
+  animation: slideUp 0.5s ease-out;
 }
-/* +++ FIN MODIFICACIÓN +++ */
 
+/* --- HEADER (Parte superior con Avatar) --- */
+.header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  border-bottom: 1px solid #cbd5e1;
 
-/* +++ MODIFICACIÓN: Estilos del Header DENTRO de la card +++ */
-.perfil-header {
+  /* Responsivo para móvil */
+  @media (max-width: 600px) {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+  }
+}
+
+.avatar-wrapper {
+  flex-shrink: 0;
+
+  .avatar {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.info-header {
+  h1 {
+    margin: 0 0 0.5rem 0;
+    color: #1e3a8a; /* Azul oscuro */
+    font-size: 2rem;
+    font-weight: 700;
+  }
+
+  .rol-badge {
+    display: inline-block;
+    background: #2563eb; /* Azul brillante */
+    color: #fff;
+    padding: 0.4rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.3);
+  }
+}
+
+/* --- BODY (Cuerpo de la tarjeta) --- */
+.body {
+  padding: 2.5rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* --- GRID DE DATOS --- */
+.datos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.dato-item {
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #334155;
+    font-weight: 500;
+  }
+}
+
+/* --- SECCIONES ESPECÍFICAS --- */
+
+/* Especialista (Horarios) */
+.especialista-section, .paciente-section {
+  margin-top: 2rem;
+}
+
+.section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
-  padding: 1.5rem 2.5rem; /* Padding interno del header */
-  border-bottom: 1px solid #e2e8f0; /* Borde separador */
-  margin-bottom: 0; /* Ya no necesita margen inferior */
-
-  h1 {
-    margin: 0;
-    color: #1e3a8a;
-    font-size: 1.8rem;
-  }
+  margin-bottom: 1rem;
 }
-/* +++ FIN MODIFICACIÓN +++ */
 
-
-/* +++ INICIO MODIFICACIÓN (Diseño Moderno) +++ */
-// --- Info de Perfil ---
-.perfil-info {
+.horarios-view {
   display: grid;
-  grid-template-columns: 1fr; /* Stack en móvil */
-  align-items: center;
-  gap: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 2.5rem; /* El padding del contenido está aquí ahora */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
 
-  /* En pantallas grandes, 2 columnas (avatar | datos) */
-  @media (min-width: 640px) {
-    grid-template-columns: 140px 1fr;
-    gap: 2.5rem;
-  }
-}
+  .esp-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
 
-.perfil-avatar {
-  justify-self: center; /* Centrado en móvil */
-  @media (min-width: 640px) {
-    justify-self: start; /* Izquierda en PC */
-  }
+    h3 {
+      margin-top: 0;
+      color: #1e40af;
+      font-size: 1rem;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 0.5rem;
+    }
 
-  img {
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 4px solid #fff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
 
-.perfil-datos {
-  text-align: center; /* Centrado en móvil */
-  @media (min-width: 640px) {
-    text-align: left; /* Izquierda en PC */
-  }
-
-  h2 {
-    margin-top: 0;
-    margin-bottom: 0.25rem;
-    color: #1e293b;
-    font-size: 1.7rem;
-  }
-  .rol {
-    font-size: 1.1rem;
-    font-weight: 500;
-    color: #1d4ed8;
-    margin-top: 0;
-  }
-  .dato {
-    font-size: 1rem;
-    color: #1e293b; /* Texto de dato más oscuro */
-    margin: 0.75rem 0;
-
-    .label {
-      font-weight: 500;
-      color: #64748b; /* Label más suave */
-      display: block; /* Stack en móvil */
-      font-size: 0.85rem;
-      margin-bottom: 0.25rem;
-
-      @media (min-width: 640px) {
-        display: inline-block; /* Lado a lado en PC */
-        margin-bottom: 0;
-        margin-right: 0.75rem;
+      li {
+        font-size: 0.9rem;
+        color: #475569;
+        margin-bottom: 0.25rem;
+        &::before { content: "• "; color: #2563eb; }
       }
     }
   }
 }
-/* +++ FIN MODIFICACIÓN (Diseño Moderno) +++ */
 
-/* +++ MI MODIFICACIÓN: Estilos para la sección de H.C. +++ */
-.perfil-seccion {
-  padding: 2.5rem; // Igual que .perfil-info
-  border-bottom: 1px solid #e2e8f0;
+/* Editor de Horarios */
+.horarios-edit {
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  padding: 1.5rem;
+  border-radius: 8px;
 
-  h3 {
-    margin-top: 0; // Para que se alinie con el padding
-    margin-bottom: 1rem; // Espacio antes de la lista
+  .esp-edit-block {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed #cbd5e1;
+
+    h4 { color: #1e3a8a; margin-top: 0; }
   }
-}
-/* +++ FIN MODIFICACIÓN +++ */
 
-.chip-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-
-  /* +++ Alinear chips en PC +++ */
-  justify-content: center;
-  @media (min-width: 640px) {
-    justify-content: flex-start;
-  }
-}
-.chip {
-  background: #e2e8f0;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-}
-
-// --- Fotos Paciente ---
-.perfil-fotos {
-  padding: 1.5rem 2.5rem; /* +++ Padding de contenido +++ */
-  border-bottom: 1px solid #e2e8f0;
-  h3 { margin-top: 0; }
-  .fotos-grid {
+  .horario-row {
     display: flex;
-    gap: 1rem;
-    img {
-      width: 100px;
-      height: 100px;
-      object-fit: cover;
-      border-radius: 8px;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
+
+    select, input {
+      padding: 0.4rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
     }
   }
 }
 
-// --- Editor de Horarios ---
-.perfil-horarios {
-  padding: 1.5rem 2.5rem 2.5rem 2.5rem; /* +++ Padding de contenido +++ */
-
-  .horarios-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    h3 { margin-top: 0; }
-  }
-
-  .mensaje-guardado {
-    background: #dcfce7;
-    color: #15803d;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-  }
-}
-
-.horario-especialidad-group {
-  margin-top: 1.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-
-  h4 {
-    margin: 0;
-    background: #f8fafc;
-    padding: 0.75rem 1.25rem;
-    border-bottom: 1px solid #e2e8f0;
-  }
-}
-
-.vista-horarios {
-  padding: 1.25rem;
-  ul {
-    margin: 0;
-    padding-left: 1.5rem;
-  }
-  li {
-    font-size: 1rem;
-    color: #334155;
-    margin-bottom: 0.5rem;
-  }
-  .no-horarios-msg {
-    font-style: italic;
-    color: #64748b;
-  }
-}
-
-.editor-horarios {
-  padding: 1.25rem;
+/* Paciente (Botones PDF) */
+.hc-actions {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.horario-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.75rem;
+/* --- BOTONES --- */
+button { cursor: pointer; transition: all 0.2s; border: none; font-weight: 600; }
 
-  .form-input {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 1rem;
-  }
+.btn-edit { background: none; color: #2563eb; border: 1px solid #2563eb; padding: 0.4rem 1rem; border-radius: 6px; &:hover { background: #eff6ff; } }
+.btn-save { background: #16a34a; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; &:hover { background: #15803d; } &:disabled { background: #9ca3af; } }
+.btn-cancel { background: #ef4444; color: white; padding: 0.6rem 1.2rem; border-radius: 6px; margin-left: 0.5rem; &:hover { background: #dc2626; } }
+.btn-add { background: #3b82f6; color: white; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.85rem; &:hover { background: #2563eb; } }
+.btn-remove { background: #fee2e2; color: #b91c1c; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; &:hover { background: #fecaca; } }
+.btn-download { background: #be123c; color: white; padding: 0.8rem; border-radius: 8px; width: 100%; text-align: center; font-size: 1rem; &:hover { background: #9f1239; } &:disabled { opacity: 0.7; } }
 
-  select.form-input {
-    flex-basis: 150px;
-    flex-grow: 1;
-  }
-  input[type="time"] {
-    flex-basis: 110px;
-    flex-grow: 1;
-  }
-  label {
-    font-size: 0.9rem;
-  }
-
-  .btn-remove {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 0;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    line-height: 1;
-    cursor: pointer;
-    font-weight: bold;
-    margin-left: auto;
-    &:hover { background: #fecaca; }
-  }
-}
-
-.btn-add {
-  align-self: flex-start;
-  margin-top: 0.5rem;
-}
-
-.editor-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1.5rem; /* <-- ESTA ERA LA LÍNEA CON EL ERROR (decía 'content') */
-}
-
-
-/* --- Botones Genéricos --- */
-.btn,
-.btn-primary,
-.btn-secondary,
-.btn-outline,
-.btn-success {
-  display: inline-block;
-  padding: 0.6rem 1.2rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  line-height: 1.2;
+/* --- LOADING & FOOTER --- */
+.loading {
+  padding: 4rem;
   text-align: center;
-}
+  color: #64748b;
 
-.btn-primary {
-  background: #1d4ed8;
-  color: #fff;
-  &:hover { background: #1e3a8a; }
-}
-.btn-secondary {
-  background: #e2e8f0;
-  color: #1e293b;
-  border-color: #cbd5e1;
-  &:hover { background: #cbd5e1; }
-}
-.btn-success {
-  background: #16a34a;
-  color: #fff;
-  &:hover { background: #15803d; }
-  &:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
+  .spinner {
+    width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;
   }
 }
-.btn-outline {
-  background: #fff;
-  color: #334155;
-  border-color: #cbd5e1;
-  &:hover { background: #f8fafc; }
+
+.footer {
+  text-align: center;
+  margin-top: 2rem;
+  .link-home { color: #64748b; text-decoration: none; &:hover { color: #3b82f6; text-decoration: underline; } }
 }
 
-// En mi-perfil.scss
-.acciones-paciente {
-  margin-top: 1.5rem;
-  .btn-pdf {
-    background-color: #dc2626; // Un rojo para que parezca PDF
-    &:hover { background-color: #b91c1c; }
-  } // <-- AQUÍ ESTABA LA 'F' (YA LA BORRÉ)
+.alert {
+  margin-top: 1rem; padding: 1rem; background: #dcfce7; color: #166534; border-radius: 6px; text-align: center; font-weight: 500;
 }
+
+/* Animaciones */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }

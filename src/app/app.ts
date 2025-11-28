@@ -10,8 +10,7 @@ import {
 } from '@angular/router';
 import { SpinnerService } from './services/spinner.service';
 import { SpinnerComponent } from './shared/spinner/spinner';
-// +++ IMPORTAMOS LA ANIMACIÓN +++
-import { fadeAnimation } from './animations';
+import { fadeAnimation, slideInAnimation } from './animations';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +18,7 @@ import { fadeAnimation } from './animations';
   imports: [CommonModule, RouterOutlet, SpinnerComponent],
   templateUrl: './app.html',
   styleUrls: ['./app.scss'],
-  animations: [fadeAnimation], // +++ REGISTRAMOS LA ANIMACIÓN +++
+  animations: [fadeAnimation, slideInAnimation],
 })
 export class AppComponent {
   title = 'clinica-online';
@@ -29,15 +28,21 @@ export class AppComponent {
   constructor(public spinnerSvc: SpinnerService) {
     this.router.events.subscribe((evt) => {
       if (evt instanceof NavigationStart) {
-        this.spinnerSvc.show();
+        // FIX NG0100: Usamos setTimeout para diferir la actualización
+        setTimeout(() => this.spinnerSvc.show(), 0);
       }
       if (
         evt instanceof NavigationEnd ||
         evt instanceof NavigationCancel ||
         evt instanceof NavigationError
       ) {
-        this.spinnerSvc.hide();
+        // FIX NG0100: Usamos setTimeout aquí también
+        setTimeout(() => this.spinnerSvc.hide(), 0);
       }
     });
+  }
+
+  prepareRoute(outlet: RouterOutlet) {
+    return outlet && outlet.activatedRouteData && outlet.activatedRouteData['animation'];
   }
 }

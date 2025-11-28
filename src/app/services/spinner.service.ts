@@ -1,4 +1,3 @@
-// spinner.service.ts
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
@@ -11,10 +10,15 @@ export class SpinnerService {
   constructor() {}
 
   show() {
-    this.isLoading.next(true);
+    // FIX DEFINITIVO NG0100: Usamos setTimeout para sacar la actualización del ciclo actual
+    setTimeout(() => {
+      this.isLoading.next(true);
+    }, 0);
   }
 
   hide() {
-    this.isLoading.next(false);
+    setTimeout(() => {
+      this.isLoading.next(false);
+    }, 0);
   }
 }

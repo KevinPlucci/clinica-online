@@ -18,12 +18,10 @@
           Ir al panel
         </a>
 
-        <!-- +++ INICIO MODIFICACIÓN (Mi Perfil) +++ -->
         <!-- Botón "Mi Perfil" (Todos los logueados) -->
         <a class="btn btn-primary" routerLink="/mi-perfil" aria-label="Ir a Mi Perfil">
           Mi Perfil
         </a>
-        <!-- +++ FIN MODIFICACIÓN +++ -->
 
         <!-- Botón "Mis Turnos" si es paciente o especialista -->
         <a
@@ -33,6 +31,16 @@
           aria-label="Ir a Mis Turnos"
         >
           Mis Turnos
+        </a>
+
+        <!-- +++ NUEVO BOTÓN: MIS PACIENTES (Solo Especialista) +++ -->
+        <a
+          *ngIf="me.rol === 'especialista'"
+          class="btn btn-primary"
+          routerLink="/especialista/pacientes"
+          aria-label="Ir a Mis Pacientes"
+        >
+          Mis Pacientes
         </a>
 
         <!-- Botón "Solicitar Turno" si es paciente -->

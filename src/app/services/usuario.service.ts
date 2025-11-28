@@ -24,7 +24,7 @@ export class UsuarioService {
 
   private usersRef = collection(this.firestore, 'usuarios');
 
-  // --- Funciones Observable (Sin Cambios) ---
+  // --- Funciones Observable ---
 
   usuarios$(): Observable<Usuario[]> {
     return defer(() =>
@@ -39,7 +39,7 @@ export class UsuarioService {
     ).pipe(map((u: any) => (u ? (u as Usuario) : null)));
   }
 
-  // --- Acciones (Sin Cambios) ---
+  // --- Acciones ---
 
   async setUsuario(uid: string, data: Partial<Usuario>) {
     const ref = doc(this.firestore, 'usuarios', uid);
@@ -54,6 +54,7 @@ export class UsuarioService {
 
   async updateHabilitado(uid: string, habilitado: boolean) {
     const ref = doc(this.firestore, 'usuarios', uid);
+    // Nota: getDoc a veces también necesita el contexto
     const snap = await runInInjectionContext(this.env, () => getDoc(ref));
     if (!snap.exists()) throw new Error('Usuario no encontrado');
 
@@ -85,42 +86,33 @@ export class UsuarioService {
     );
   }
 
-  // +++ INICIO: NUEVAS FUNCIONES ASYNC (Promise) +++
+  // --- Funciones Async CORREGIDAS ---
 
-  /**
-   * Obtiene TODOS los usuarios (devuelve Promesa)
-   * +++ ESTA ES LA FUNCIÓN CORREGIDA +++
-   */
   async getAllUsuarios(): Promise<Usuario[]> {
-    const querySnapshot = await getDocs(this.usersRef);
-    // Mapeamos los documentos y AÑADIMOS EL ID (uid)
-    return querySnapshot.docs.map((doc) => {
-      return {
-        uid: doc.id,
-        ...doc.data(),
-      } as Usuario;
+    return runInInjectionContext(this.env, async () => {
+      const querySnapshot = await getDocs(this.usersRef);
+      return querySnapshot.docs.map((doc) => {
+        return {
+          uid: doc.id,
+          ...doc.data(),
+        } as Usuario;
+      });
     });
   }
 
-  /**
-   * Obtiene un grupo de usuarios por sus IDs (devuelve Promesa)
-   * +++ CORREGIDO TAMBIÉN POR SI ACASO +++
-   */
   async getUsuariosPorListaDeIds(ids: string[]): Promise<Usuario[]> {
     if (!ids || ids.length === 0) {
       return [];
     }
-
-    // Asumimos menos de 30 IDs
-    const q = query(this.usersRef, where('uid', 'in', ids));
-
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map((doc) => {
-      return {
-        uid: doc.id,
-        ...doc.data(),
-      } as Usuario;
+    return runInInjectionContext(this.env, async () => {
+      const q = query(this.usersRef, where('uid', 'in', ids));
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map((doc) => {
+        return {
+          uid: doc.id,
+          ...doc.data(),
+        } as Usuario;
+      });
     });
   }
-  // +++ FIN: NUEVAS FUNCIONES ASYNC +++
 }
