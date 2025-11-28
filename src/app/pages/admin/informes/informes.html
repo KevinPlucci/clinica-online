@@ -1,6 +1,11 @@
 <div class="informes-container fade-in">
   <div class="header-section">
-    <h2>Informes y Estadísticas</h2>
+    <div class="header-top">
+      <h2>Informes y Estadísticas</h2>
+
+      <button class="btn-back" routerLink="/admin/usuarios">← Volver</button>
+    </div>
+
     <div class="tabs">
       <button
         class="tab-btn"
@@ -19,7 +24,6 @@
     </div>
   </div>
 
-  <!-- SECCIÓN LOGS -->
   <div class="content-section" *ngIf="activeTab() === 'logs'">
     <div class="toolbar">
       <h3>Historial de Ingresos</h3>
@@ -53,7 +57,6 @@
     </div>
   </div>
 
-  <!-- SECCIÓN GRÁFICOS -->
   <div class="content-section" *ngIf="activeTab() === 'graficos'">
     <div class="toolbar">
       <div class="dates">
@@ -67,18 +70,12 @@
       <button class="btn-pdf" (click)="descargarPDFGraficos()">📄 PDF</button>
     </div>
 
-    <!-- ID para capturar el PDF -->
     <div id="charts-printable" class="grid-graficos">
-      <!-- 1. Torta (SVG) -->
       <div class="card-grafico">
         <h4 appAgrandar>Turnos por Especialidad</h4>
-
         <div class="chart-layout">
-          <!-- Círculo SVG -->
           <div class="pie-chart-container">
-            <!-- Si no hay datos, mostramos un círculo gris -->
             <div *ngIf="chartEspecialidades.length === 0" class="empty-pie">Sin datos</div>
-
             <svg viewBox="-1 -1 2 2" class="pie-svg" *ngIf="chartEspecialidades.length > 0">
               <path
                 *ngFor="let slice of chartEspecialidades"
@@ -89,21 +86,16 @@
               ></path>
             </svg>
           </div>
-
-          <!-- Leyenda -->
           <div class="legend">
             <div *ngFor="let item of chartEspecialidades" class="legend-item">
               <span class="dot" [style.background]="item.color"></span>
               <span>{{ item.label }} ({{ item.value }})</span>
             </div>
-            <div *ngIf="chartEspecialidades.length === 0" class="no-data-text">
-              No hay turnos registrados.
-            </div>
+            <div *ngIf="chartEspecialidades.length === 0" class="no-data-text">No hay turnos.</div>
           </div>
         </div>
       </div>
 
-      <!-- 2. Barras (CSS) - Turnos por Día -->
       <div class="card-grafico">
         <h4 appAgrandar>Turnos por Día</h4>
         <div class="bar-chart">
@@ -116,7 +108,6 @@
         </div>
       </div>
 
-      <!-- 3. Solicitados -->
       <div class="card-grafico full-width">
         <h4 appAgrandar>Solicitados por Médico</h4>
         <div class="bar-chart">
@@ -127,12 +118,11 @@
             <span class="bar-label">{{ item.label | doctor }}</span>
           </div>
           <div *ngIf="chartMedicosSolicitados.length === 0" class="no-data-text">
-            No hay datos en este rango de fechas.
+            Sin datos en rango.
           </div>
         </div>
       </div>
 
-      <!-- 4. Finalizados -->
       <div class="card-grafico full-width">
         <h4 appAgrandar>Finalizados por Médico</h4>
         <div class="bar-chart">
@@ -143,7 +133,7 @@
             <span class="bar-label">{{ item.label | doctor }}</span>
           </div>
           <div *ngIf="chartMedicosFinalizados.length === 0" class="no-data-text">
-            No hay datos en este rango de fechas.
+            Sin datos en rango.
           </div>
         </div>
       </div>

@@ -33,18 +33,45 @@
     flex-direction: column;
 }
 
-h2 {
-    color: #1e3a8a;
-    margin-top: 0;
+/* +++ ESTILOS HEADER Y BOTÓN VOLVER +++ */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
     border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0.5rem;
+
+    h2 {
+        color: #1e3a8a;
+        margin: 0;
+        border: none;
+        padding: 0;
+    }
+}
+
+.btn-back {
+    background: white;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+
+    &:hover {
+        background: #f1f5f9;
+        color: #1e3a8a;
+        border-color: #94a3b8;
+    }
 }
 
 /* --- ESTILOS FAVBUTTONS (GRID) --- */
 .grid-pacientes {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); /* Favbuttons responsivos */
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 1.5rem;
     padding: 0.5rem;
 }
@@ -60,7 +87,7 @@ h2 {
     img {
         width: 80px;
         height: 80px;
-        border-radius: 50%; /* REDONDO */
+        border-radius: 50%;
         object-fit: cover;
         border: 4px solid #fff;
         box-shadow: 0 4px 8px rgba(0,0,0,0.15);
@@ -79,7 +106,6 @@ h2 {
         .apellido { font-size: 0.85rem; color: #64748b; }
     }
 
-    /* Efectos Hover y Active */
     &:hover {
         transform: translateY(-5px);
         img { border-color: #3b82f6; box-shadow: 0 8px 15px rgba(59, 130, 246, 0.3); }
@@ -149,6 +175,14 @@ h2 {
         display: flex; gap: 0.5rem;
         .badge { font-size: 0.75rem; background: #e2e8f0; padding: 2px 8px; border-radius: 12px; color: #475569; }
     }
+}
+
+.no-resenas {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    padding: 2rem;
 }
 
 .fade-in { animation: fadeIn 0.3s ease-in; }

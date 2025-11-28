@@ -1,7 +1,10 @@
 <div class="layout-container">
-  <!-- PANEL IZQUIERDO: FAVBUTTONS (GRID) -->
+  <!-- PANEL IZQUIERDO: FAVBUTTONS -->
   <div class="lista-panel">
-    <h2>Mis Pacientes</h2>
+    <div class="header-section">
+      <h2>Mis Pacientes</h2>
+      <button class="btn-back" routerLink="/bienvenida">← Volver</button>
+    </div>
 
     <div *ngIf="spinner.isLoading | async" class="estado-simple">
       <p>Cargando pacientes...</p>
@@ -11,7 +14,6 @@
       <p>Aún no has finalizado ninguna atención.</p>
     </div>
 
-    <!-- Reemplazamos la lista <ul> por un contenedor GRID para los botones redondos -->
     <div class="grid-pacientes" *ngIf="!(spinner.isLoading | async)">
       <div
         class="paciente-favbutton"
@@ -19,10 +21,8 @@
         (click)="seleccionarPaciente(p)"
         [class.active]="pacienteSeleccionado()?.uid === p.uid"
       >
-        <!-- Imagen Redonda Grande -->
         <img [src]="p.fotoURL || 'assets/avatar-placeholder.png'" alt="Avatar" />
 
-        <!-- Nombre debajo -->
         <div class="info-fav">
           <span class="nombre">{{ p.nombre }}</span>
           <span class="apellido">{{ p.apellido }}</span>
@@ -31,7 +31,7 @@
     </div>
   </div>
 
-  <!-- PANEL DERECHO: DETALLE + RESEÑAS -->
+  <!-- PANEL DERECHO: DETALLE -->
   <div class="detalle-panel">
     <div *ngIf="!pacienteSeleccionado(); else detalleTemplate">
       <div class="estado-simple-grande">
@@ -44,10 +44,10 @@
       <div *ngIf="pacienteSeleccionado() as p" class="contenido-detalle fade-in">
         <div class="header-detalle">
           <h2>{{ p.nombre }} {{ p.apellido }}</h2>
-          <button class="btn-close" (click)="seleccionarPaciente(p)">Cerrar ✖</button>
+          <button class="btn-close" (click)="pacienteSeleccionado.set(null)">Cerrar ✖</button>
         </div>
 
-        <!-- 1. Historia Clínica (Componente Reutilizable) -->
+        <!-- 1. Historia Clínica -->
         <div class="seccion-hc">
           <h3>Historia Clínica</h3>
           <app-historia-clinica [pacienteId]="p.uid"></app-historia-clinica>
@@ -55,7 +55,7 @@
 
         <hr class="divider" />
 
-        <!-- 2. Reseñas de cada consulta (Requisito Nuevo) -->
+        <!-- 2. Reseñas -->
         <div class="seccion-resenas">
           <h3>Reseñas de mis consultas</h3>
 

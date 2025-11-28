@@ -16,7 +16,7 @@ export class DiaSemanaPipe implements PipeTransform {
       dateObj = new Date(fecha);
     }
 
-    // Array de días en español
+    // Array de días
     const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
     return dias[dateObj.getDay()];
   }

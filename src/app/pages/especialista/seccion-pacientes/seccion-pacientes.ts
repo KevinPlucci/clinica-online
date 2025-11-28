@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs'; // <--- IMPORTANTE: Agregamos esto
+import { RouterLink } from '@angular/router';
 import { Usuario } from '../../../models/usuario';
 import { Turno } from '../../../models/turno';
 import { AuthService } from '../../../services/auth.service';
@@ -10,10 +10,12 @@ import { UsuarioService } from '../../../services/usuario.service';
 import { SpinnerService } from '../../../services/spinner.service';
 import { HistoriaClinicaComponent } from '../../../shared/historia-clinica/historia-clinica';
 
+import { firstValueFrom } from 'rxjs';
+
 @Component({
   selector: 'app-seccion-pacientes',
   standalone: true,
-  imports: [CommonModule, FormsModule, HistoriaClinicaComponent],
+  imports: [CommonModule, FormsModule, HistoriaClinicaComponent, RouterLink],
   templateUrl: './seccion-pacientes.html',
   styleUrls: ['./seccion-pacientes.scss'],
 })
@@ -30,7 +32,6 @@ export class SeccionPacientesComponent implements OnInit {
   async ngOnInit() {
     this.spinner.show();
     try {
-      // CORRECCIÓN: Usamos firstValueFrom(this.auth.me$) en lugar de getCurrentUser()
       const user = await firstValueFrom(this.auth.me$);
 
       if (user && user.uid) {
@@ -66,17 +67,27 @@ export class SeccionPacientesComponent implements OnInit {
     this.spinner.show();
 
     try {
-      // CORRECCIÓN: Aquí también usamos firstValueFrom(this.auth.me$)
       const user = await firstValueFrom(this.auth.me$);
 
       if (user) {
         const turnos = await this.turnoService.getTurnosParaEspecialista(user.uid);
+
         // Filtramos: Turnos con ESE paciente y que estén REALIZADOS
         const historia = turnos.filter(
           (t) => t.pacienteId === paciente.uid && t.estado === 'realizado'
         );
+
         // Ordenamos por fecha (más reciente primero)
-        historia.sort((a, b) => b.fecha['seconds'] - a.fecha['seconds']);
+        // Manejamos tanto Timestamp de Firebase como Date nativo
+        historia.sort((a, b) => {
+          const dateA = a.fecha['seconds']
+            ? a.fecha['seconds'] * 1000
+            : new Date(a.fecha as any).getTime();
+          const dateB = b.fecha['seconds']
+            ? b.fecha['seconds'] * 1000
+            : new Date(b.fecha as any).getTime();
+          return dateB - dateA;
+        });
 
         this.turnosConElPaciente.set(historia);
       }

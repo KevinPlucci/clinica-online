@@ -14,7 +14,13 @@
 
     <ng-container *ngIf="me$ | async as me; else anon">
       <div class="cta">
-        <a class="btn btn-primary" [routerLink]="getPanelLink(me?.rol)" aria-label="Ir al panel">
+        <!-- +++ MODIFICACIÓN: Solo el Admin ve este botón +++ -->
+        <a
+          *ngIf="me.rol === 'admin'"
+          class="btn btn-primary"
+          [routerLink]="getPanelLink(me?.rol)"
+          aria-label="Ir al panel"
+        >
           Ir al panel
         </a>
 
@@ -23,7 +29,7 @@
           Mi Perfil
         </a>
 
-        <!-- Botón "Mis Turnos" si es paciente o especialista -->
+        <!-- Botón "Mis Turnos" (Paciente o Especialista) -->
         <a
           *ngIf="me.rol === 'paciente' || me.rol === 'especialista'"
           class="btn btn-primary"
@@ -33,7 +39,7 @@
           Mis Turnos
         </a>
 
-        <!-- +++ NUEVO BOTÓN: MIS PACIENTES (Solo Especialista) +++ -->
+        <!-- Botón "Mis Pacientes" (Solo Especialista) -->
         <a
           *ngIf="me.rol === 'especialista'"
           class="btn btn-primary"
@@ -43,7 +49,7 @@
           Mis Pacientes
         </a>
 
-        <!-- Botón "Solicitar Turno" si es paciente -->
+        <!-- Botón "Solicitar Turno" (Solo Paciente) -->
         <a
           *ngIf="me.rol === 'paciente'"
           class="btn btn-success"

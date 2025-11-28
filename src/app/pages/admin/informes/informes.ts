@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router'; // <--- IMPORTANTE: Agregado
 import { TurnoService } from '../../../services/turno.service';
 import { AuditService, LogIngreso } from '../../../services/audit.service';
 import { Turno } from '../../../models/turno';
@@ -22,6 +23,7 @@ import * as XLSX from 'xlsx';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink, // <--- Agregado a los imports
     DiaSemanaPipe,
     DoctorPipe,
     ResaltarDirective,
@@ -35,21 +37,16 @@ export class InformesComponent implements OnInit {
   private auditService = inject(AuditService);
   private spinner = inject(SpinnerService);
 
-  // Datos crudos
   logs = signal<LogIngreso[]>([]);
   turnos = signal<Turno[]>([]);
 
-  // Datos procesados para gráficos
-  chartEspecialidades: any[] = []; // Ahora contendrá paths SVG
+  chartEspecialidades: any[] = [];
   chartDias: any[] = [];
   chartMedicosSolicitados: any[] = [];
   chartMedicosFinalizados: any[] = [];
 
-  // Filtro de fechas (últimos 30 días por defecto)
   fechaDesde: string;
   fechaHasta: string;
-
-  // Pestaña activa
   activeTab = signal<string>('logs');
 
   constructor() {
@@ -90,7 +87,7 @@ export class InformesComponent implements OnInit {
   actualizarGraficos() {
     const allTurnos = this.turnos();
 
-    // --- 1. Turnos por Especialidad (SVG PIE) ---
+    // 1. Torta (SVG)
     const espMap = new Map<string, number>();
     allTurnos.forEach((t) => {
       const esp = t.especialidad || 'Sin Especialidad';
@@ -100,44 +97,31 @@ export class InformesComponent implements OnInit {
     const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
     const totalTurnos = allTurnos.length || 1;
 
-    // Lógica para generar SVG Paths
     let cumulativePercent = 0;
     this.chartEspecialidades = Array.from(espMap.entries()).map(([label, value], index) => {
       const percent = value / totalTurnos;
-
-      // Calculamos las coordenadas del arco SVG
       const startX = Math.cos(2 * Math.PI * cumulativePercent);
       const startY = Math.sin(2 * Math.PI * cumulativePercent);
-
       cumulativePercent += percent;
-
       const endX = Math.cos(2 * Math.PI * cumulativePercent);
       const endY = Math.sin(2 * Math.PI * cumulativePercent);
 
-      // Si es el 100%, dibujamos un círculo completo
       if (percent === 1) {
         return {
           label,
           value,
           color: colors[index % colors.length],
-          path: 'M 1 0 A 1 1 0 1 1 -1 0 A 1 1 0 1 1 1 0 Z', // Círculo completo
+          path: 'M 1 0 A 1 1 0 1 1 -1 0 A 1 1 0 1 1 1 0 Z',
         };
       }
 
       const largeArcFlag = percent > 0.5 ? 1 : 0;
-
-      // Comando SVG: Move to centro, Line to start, Arc to end, Close path
       const pathData = `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
 
-      return {
-        label,
-        value,
-        color: colors[index % colors.length],
-        path: pathData,
-      };
+      return { label, value, color: colors[index % colors.length], path: pathData };
     });
 
-    // --- 2. Turnos por Día (Barras) ---
+    // 2. Barras Días
     const diasMap = new Map<string, number>();
     const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -148,7 +132,6 @@ export class InformesComponent implements OnInit {
     });
 
     const maxDias = Math.max(...Array.from(diasMap.values()), 1);
-
     this.chartDias = Array.from(diasMap.entries()).map(([label, value]) => ({
       label,
       value,
@@ -156,10 +139,9 @@ export class InformesComponent implements OnInit {
       color: '#6366f1',
     }));
 
-    // --- FILTRO POR FECHAS ---
+    // Filtros
     const desde = new Date(this.fechaDesde);
     desde.setHours(0, 0, 0, 0);
-
     const hasta = new Date(this.fechaHasta);
     hasta.setHours(23, 59, 59, 999);
 
@@ -168,14 +150,13 @@ export class InformesComponent implements OnInit {
       return f >= desde && f <= hasta;
     });
 
-    // --- 3. Solicitados por Médico ---
+    // 3. Solicitados
     const medSolMap = new Map<string, number>();
     turnosEnRango.forEach((t) => {
       const med = t.especialistaNombre || 'Desconocido';
       medSolMap.set(med, (medSolMap.get(med) || 0) + 1);
     });
     const maxSol = Math.max(...Array.from(medSolMap.values()), 1);
-
     this.chartMedicosSolicitados = Array.from(medSolMap.entries()).map(([label, value]) => ({
       label,
       value,
@@ -183,7 +164,7 @@ export class InformesComponent implements OnInit {
       color: '#0ea5e9',
     }));
 
-    // --- 4. Finalizados por Médico ---
+    // 4. Finalizados
     const medFinMap = new Map<string, number>();
     turnosEnRango
       .filter((t) => t.estado === 'realizado')
@@ -192,7 +173,6 @@ export class InformesComponent implements OnInit {
         medFinMap.set(med, (medFinMap.get(med) || 0) + 1);
       });
     const maxFin = Math.max(...Array.from(medFinMap.values()), 1);
-
     this.chartMedicosFinalizados = Array.from(medFinMap.entries()).map(([label, value]) => ({
       label,
       value,
@@ -200,8 +180,6 @@ export class InformesComponent implements OnInit {
       color: '#10b981',
     }));
   }
-
-  // --- DESCARGAS ---
 
   descargarExcelLogs() {
     const data = this.logs().map((l) => ({
@@ -221,15 +199,10 @@ export class InformesComponent implements OnInit {
       const data = document.getElementById('charts-printable');
       if (data) {
         try {
-          // Usamos html2canvas con opciones básicas que funcionan bien con SVG
-          const canvas = await html2canvas(data, {
-            scale: 2,
-            useCORS: true,
-          });
+          const canvas = await html2canvas(data, { scale: 2, useCORS: true });
           const imgWidth = 208;
           const pageHeight = 295;
           const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
           const doc = new jsPDF('p', 'mm', 'a4');
           doc.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
           doc.save('informes_clinica.pdf');
